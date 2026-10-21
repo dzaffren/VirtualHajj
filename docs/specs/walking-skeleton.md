@@ -86,7 +86,7 @@ Scenario: The stress page holds 30 FPS on a Galaxy A35 for 5 minutes
   But if the browser drops the 3D view during the run, the readout says "Stopped" and the run is a fail
 
 Scenario: Every push runs the checks and the e2e test on a preview URL
-  Given a developer pushes the branch walking-skeleton to the GitHub repo
+  Given a developer pushes the branch feat/walking-skeleton to the GitHub repo
   When GitHub Actions runs the workflow
   Then it installs with pnpm, type-checks, runs the Vitest tests, builds, and deploys a Cloudflare Pages preview
   And Playwright opens the preview URL, waits for the canvas, and checks the frame is not one flat colour
@@ -141,6 +141,7 @@ stateDiagram-v2
     [*] --> Loading: page opens
     Loading --> NoWebGL2: browser has no WebGL 2
     Loading --> Ready: first frame drawn
+    Loading --> Stopped: browser drops the 3D view
     Ready --> Stopped: browser drops the 3D view
     Stopped --> Loading: Reload
 ```
@@ -280,11 +281,12 @@ Every file is new except the docs at the bottom. Versions are the current releas
 
 | File | What changes | Why |
 | ---- | ------------ | --- |
-| `package.json` | Scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `test` (`vitest run`), `e2e` (`playwright test`), `lint`, `typecheck`, `format`. `packageManager: pnpm@12.14.0`, `engines.node: 24`. The dependencies above, and `pnpm.onlyBuiltDependencies` for any package whose install script pnpm blocks | D17–D21, D28 |
+| `package.json` | Scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `test` (`vitest run`), `e2e` (`playwright test`), `lint`, `typecheck`, `format`. `packageManager: pnpm@12.14.0`, `engines.node: 24`. The dependencies above | D17–D21, D28 |
 | `pnpm-lock.yaml` | The lockfile | D20 |
+| `pnpm-workspace.yaml` | `allowBuilds` denies the esbuild and workerd install scripts, which pnpm blocks; neither is needed to build or deploy | D20 |
 | `.nvmrc` | `24` | CI and local use the same Node |
 | `tsconfig.json` | Strict; `src/`, `e2e/`, config files | Type-check step |
-| `vite.config.ts` | React plugin; `build.rollupOptions.input` with `index.html` and `perf/index.html` | Two pages |
+| `vite.config.ts` | React plugin; `appType: "mpa"`, so the local preview has no SPA fallback; `build.rolldownOptions.input` with `index.html` and `perf/index.html` | Two pages |
 | `eslint.config.js`, `.prettierrc` | typescript-eslint recommended rules; Prettier defaults | Scope |
 | `index.html` | The Loading card as plain markup inside `#root`, `<link>` to `src/styles/app.css`, `<title>VirtualHajj</title>` | Loading shows before the bundle arrives |
 | `perf/index.html` | The same, with the "Stress test" card | `/perf` |
@@ -292,14 +294,14 @@ Every file is new except the docs at the bottom. Versions are the current releas
 | `src/ui/TopCard.tsx` | The top card: name, instruction line, optional hint, body and action | Interface, D29 |
 | `src/ui/PrimaryButton.tsx` | The system's primary button | Scenario 5, D29 |
 | `src/scene/palette.ts` | The scene palette, day and night | D25 |
-| `src/scene/useColorScheme.ts`, `src/scene/useReducedMotion.ts` | `matchMedia` hooks that follow changes | Night scene, tier 1 rules |
-| `src/scene/canvasConfig.ts` | One Canvas setup: `dpr [1, 2]`, antialias on, camera fov 50, start position, `gl.setClearColor` | D22: `/perf` proves what `/` uses |
+| `src/scene/useMediaQuery.ts` | One `matchMedia` hook that follows changes, used for the light or dark setting and for reduced motion | Night scene, tier 1 rules |
+| `src/scene/canvasConfig.ts` | One Canvas setup: `dpr [1, 2]`, antialias on, no tone mapping (as the preview), camera fov 50, start position. The sky is the scene background | D22: `/perf` proves what `/` uses |
 | `src/scene/BaseScene.tsx` | Sky, hemisphere and sun lights, ground disc, the 11 × 13 × 12 m Kaabah with the kiswah `CanvasTexture`. Ported from the preview | Scenarios 1–3 |
 | `src/scene/OrbitCamera.tsx` | drei `OrbitControls`: no pan, 16–70 m, at least 5° above the ground, damping off with reduced motion; keyboard through `orbitStep` | Scenario 1 |
 | `src/scene/orbitStep.ts` + `.test.ts` | A pure function: camera position, target, key and limits in, new position out. Ported from the preview's `keyOrbit` | Scenario 1 |
 | `src/scene/hasWebGL2.ts` | `canvas.getContext('webgl2') !== null` | Scenario 5 |
 | `src/viewer/main.tsx`, `src/viewer/App.tsx` | Mounts the app. Sets `data-state` on the root. Listens for `webglcontextlost` on `gl.domElement` from `onCreated`. Reload calls `location.reload()` | Scenarios 1, 2, 5 |
-| `src/viewer/viewerState.ts` + `.test.ts` | A pure reducer: `loading → ready \| no-webgl`, `ready → stopped` | Scenario 5 |
+| `src/viewer/viewerState.ts` + `.test.ts` | A pure reducer: `loading → ready \| no-webgl`, `loading \| ready → stopped` | Scenario 5 |
 | `src/perf/main.tsx`, `src/perf/App.tsx` | The stress scene and its readout. Reads `gl.info.render` each second for Drawn | Scenario 3 |
 | `src/perf/meter.ts` + `.test.ts` | A pure meter: frame times in; one-second windows, the lowest reading after the first frame, the time, and the verdict out: running, pass, below 30 or stopped | Scenario 3, D22 |
 | `src/perf/StressLoad.tsx` | 100 columns sharing one `CylinderGeometry(0.6, 0.6, 8, 90, 10)`, 1,980 triangles each, `frustumCulled = false` | D22 |
@@ -308,7 +310,7 @@ Every file is new except the docs at the bottom. Versions are the current releas
 | `e2e/viewer.spec.ts` | "draws the Kaabah", "says when the view stops", "says when there is no WebGL 2" | Scenarios 1, 4, 5 |
 | `e2e/perf.spec.ts` | "draws the full load" | Scenario 3 |
 | `playwright.config.ts` | `baseURL` from `BASE_URL`, or a local `pnpm build && pnpm preview` server when it is unset. Projects: `chromium`, and `no-webgl` launched with `--disable-3d-apis`, which runs only the no-WebGL test | Scenarios 4, 5 |
-| `.github/workflows/ci.yml` | On push and pull_request: pnpm install with cache, typecheck, lint, test, build. Then, for branches of this repo only: `cloudflare/wrangler-action` pinned to a commit SHA (`pages deploy dist --project-name=virtualhajj --branch=<branch>`), then `playwright install --with-deps chromium` and `pnpm e2e` with `BASE_URL` set to the action's `deployment-url`. No `pull_request_target` | Scenario 4, D30 |
+| `.github/workflows/ci.yml` | On push and pull_request: pnpm install with cache, typecheck, lint, test, build. Then, for branches of this repo only: `cloudflare/wrangler-action` pinned to a commit SHA (`pages deploy dist --project-name=virtualhajj --branch=<branch>`), then a `curl` that retries until the deployment answers, `playwright install --with-deps chromium`, and `pnpm e2e` with `BASE_URL` set to the action's `deployment-url`. The Playwright report is uploaded when a step fails. No `pull_request_target` | Scenario 4, D30 |
 | `README.md`, `OVERVIEW.md` | The Run it table: `pnpm install`, `pnpm dev`, `pnpm test`, `pnpm e2e`, `pnpm lint` | Scope |
 | `docs/ARCHITECTURE.md` | Components and deployment, from the diagrams above | Project docs |
 | `CHANGELOG.md` | The slice 0 entry | `/ship` |
@@ -321,7 +323,7 @@ Reusing: the design system's `styles.css` and tokens, imported as they are, and 
 2. You: create an API token with only Account › Cloudflare Pages › Edit, and note the account ID.
 3. `/build`: commit nothing to main. Run `gh repo create dzaffren/VirtualHajj --public --source . --remote origin`, then `git push origin docs/design-system:main`.
 4. You: run `! gh secret set CLOUDFLARE_API_TOKEN` and `! gh secret set CLOUDFLARE_ACCOUNT_ID`, so the token never passes through Claude.
-5. `/build`: branch `walking-skeleton` off `main`. After the first CI run, protect `main` so the `ci` check must pass, with `gh api -X PUT repos/dzaffren/VirtualHajj/branches/main/protection`.
+5. `/build`: branch `feat/walking-skeleton` off `main`. After the first CI run, protect `main` so the `ci` check must pass, with `gh api -X PUT repos/dzaffren/VirtualHajj/branches/main/protection`.
 
 ### Earn-it
 
@@ -380,9 +382,9 @@ Single chunk. The pages share `scene/` and `ui/`, and the first CI run has to an
 | The A35 fails the 5-minute run | That's the test doing its job. Slice 0 is not done; we lower the load in D22, or pick another approach, before `tawaf` builds the mosque |
 | 200,000 triangles is a guess at the mosque | `tawaf` runs `/perf` again with the real scene. D22 says the number is an estimate |
 | A code-built figure costs less than the real character | Same answer: `tawaf` runs `/perf` again with the real character |
-| Cloudflare's preview URL answers a moment after the deploy step returns | The e2e test's first `goto` retries until it gets a 200, up to 60 s |
+| Cloudflare's preview URL answers a moment after the deploy step returns | CI's `curl` retries the URL every 5 s, 12 times, before Playwright starts |
 | Google Fonts is slow or blocked | `fonts.css` falls back to `system-ui`; the page still works |
-| pnpm blocks a package's install script | Allow it by name in `pnpm.onlyBuiltDependencies` |
+| pnpm blocks a package's install script | Allow or deny it by name in `allowBuilds` in `pnpm-workspace.yaml` |
 
 ## Decisions to record
 
@@ -409,6 +411,11 @@ Recorded as D17 to D30.
 | O15 | Who sets up the GitHub repo, the Cloudflare project, the token, secrets and branch protection? | question | spec p3   | user  | Resolved      | `/build` runs `gh` for the repo, the push and branch protection, asking before each. You create the Cloudflare project and token, and set both secrets with `! gh secret set`. Steps in Technical plan › Changes. 2026-10-21 |
 | O16 | Fork PRs get no secrets. What runs for them?                                             | flag     | spec p3   | user  | Resolved      | The build and unit tests only. Deploy and e2e are skipped, and fork PRs are reviewed by hand before merging. D30. 2026-10-21                                                                                                  |
 | O17 | typescript-eslint supports TypeScript below 6.1, and the latest is 7.0. Which do we use? | question | spec p3   | user  | Resolved      | Pin TypeScript 6.0. D28. 2026-10-21                                                                                                                                                                                          |
+| O18 | Scenario 4 said "Given a developer pushes the branch walking-skeleton to the GitHub repo". | flag | build | user | Decided alone | Chose: the branch is `feat/walking-skeleton`, the `{type}/{slice}` form from zuko's git naming. Scenario 4 and setup step 5 now say so. Other: a bare `walking-skeleton` branch. Undo: push the work to `walking-skeleton` and edit scenario 4 back. 2026-10-21 |
+| O19 | The viewer state diagram had no path from Loading to Stopped. If the browser drops the view before the first frame, the learner waits on "Loading the Kaabah…" for ever. | flag | build | user | Decided alone | Chose: `loading → stopped` on a dropped view, with the same message and Reload button (D27). The diagram and the reducer row now say so. Other: Stopped only from Ready. Undo: remove the `loading` case from `context-lost` in `src/viewer/viewerState.ts` and its test. 2026-10-21 |
+| O20 | The plan named `useColorScheme.ts` and `useReducedMotion.ts`. They differ only in the media query. | flag | build | user | Decided alone | Chose: one `src/scene/useMediaQuery.ts`, called with each query; `useScenePalette()` in `palette.ts` wraps the dark-mode one. Other: two hook files with the same body. Undo: split the hook into the two named files. 2026-10-21 |
+| O21 | pnpm 12 blocked the install scripts of esbuild (from Vite) and workerd (from wrangler), and fails the install until each is allowed or denied. The plan said to allow them. | flag | build | user | Decided alone | Chose: deny both in `pnpm-workspace.yaml` `allowBuilds`. The build, the local preview and the unit tests work without them. Wrangler needs workerd only for `wrangler dev`. Other: allow both. Undo: set both to `true` in `allowBuilds`. 2026-10-21 |
+| O22 | The plan said the e2e test's first `goto` retries until the preview answers. | flag | build | user | Decided alone | Chose: a `curl --retry 12 --retry-delay 5` step in CI before Playwright, so the tests stay plain. Other: a retrying `goto` helper in `e2e/`. Undo: drop the CI step, and add the helper to both spec files. 2026-10-21 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
