@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  background: var(--vh-surface);
+  color: var(--vh-ink);
+  font: var(--vh-text-body);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vh-accent-ink);
+  outline-offset: 2px;
+}
+
+.vh-doa {
+  font: var(--vh-text-doa);
+}

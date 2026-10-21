@@ -1,0 +1,11 @@
+{
+  "projectId": "26e7528a-a3db-4260-a6da-f3958a94d66c",
+  "pkg": "@virtualhajj/design-system",
+  "globalName": "VirtualHajj",
+  "shape": "package",
+  "entry": "docs/design/design-system/index.js",
+  "cssEntry": "base.css",
+  "tokensPkg": "@virtualhajj/design-system",
+  "tokensGlob": "tokens/*.css",
+  "readmeHeader": ".design-sync/conventions.md"
+}

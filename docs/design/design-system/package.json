@@ -1,0 +1,7 @@
+{
+  "name": "@virtualhajj/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "module": "index.js",
+  "style": "styles.css"
+}
