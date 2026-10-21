@@ -7,6 +7,12 @@ on:
 permissions:
   contents: read
 
+# One run at a time per branch or PR, and a newer push replaces a waiting one,
+# so an older build never deploys after a newer one.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   ci:
     runs-on: ubuntu-latest
