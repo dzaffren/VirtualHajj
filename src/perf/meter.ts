@@ -1,5 +1,6 @@
-// The /perf meter (D22): one-second FPS windows from the first frame, and a verdict at 5:00.
+// The /perf meter (D22): frames counted in fixed one-second slots from the first frame, and a verdict at 5:00.
 export const RUN_MS = 5 * 60 * 1000;
+const SLOTS = RUN_MS / 1000;
 
 export type Verdict = "running" | "pass" | "below-30" | "stopped";
 
@@ -12,48 +13,39 @@ export interface Reading {
 
 export interface Meter {
   first: number | null;
-  windowStart: number;
-  windowFrames: number;
+  slot: number;
+  slotFrames: number;
   reading: Reading;
 }
 
 export function startMeter(): Meter {
   return {
     first: null,
-    windowStart: 0,
-    windowFrames: 0,
+    slot: 0,
+    slotFrames: 0,
     reading: { lowest: null, now: null, elapsedMs: 0, verdict: "running" },
   };
 }
 
 export function meterFrame(m: Meter, at: number): Meter {
   if (m.reading.verdict !== "running") return m;
-  if (m.first === null) return { ...m, first: at, windowStart: at };
+  if (m.first === null) return { ...m, first: at, slot: 0, slotFrames: 1 };
 
-  const elapsedMs = Math.min(at - m.first, RUN_MS);
-  const windowFrames = m.windowFrames + 1;
-  const span = at - m.windowStart;
-  let next: Meter = { ...m, windowFrames };
-  if (span >= 1000) {
-    // Rounded down, so a reading of 30 always means 30 FPS or more.
-    const fps = Math.floor((windowFrames * 1000) / span);
-    const lowest = Math.min(m.reading.lowest ?? fps, fps);
-    next = {
-      ...m,
-      windowStart: at,
-      windowFrames: 0,
-      reading: { lowest, now: fps, elapsedMs, verdict: "running" },
-    };
-  }
-  if (elapsedMs < RUN_MS) return next;
-  const lowest = next.reading.lowest;
+  const t = at - m.first;
+  const slot = Math.min(Math.floor(t / 1000), SLOTS);
+  if (slot === m.slot) return { ...m, slotFrames: m.slotFrames + 1 };
+
+  // The slot is over. A slot skipped on the way had no frame at all.
+  const fps = slot > m.slot + 1 ? 0 : m.slotFrames;
+  const lowest = Math.min(m.reading.lowest ?? fps, fps);
+  const elapsedMs = Math.min(t, RUN_MS);
+  const reading: Reading = { lowest, now: fps, elapsedMs, verdict: "running" };
+  if (slot < SLOTS) return { ...m, slot, slotFrames: 1, reading };
   return {
-    ...next,
-    reading: {
-      ...next.reading,
-      elapsedMs,
-      verdict: lowest !== null && lowest >= 30 ? "pass" : "below-30",
-    },
+    ...m,
+    slot,
+    slotFrames: 0,
+    reading: { ...reading, verdict: lowest >= 30 ? "pass" : "below-30" },
   };
 }
 

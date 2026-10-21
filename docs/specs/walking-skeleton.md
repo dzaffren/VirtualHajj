@@ -303,7 +303,7 @@ Every file is new except the docs at the bottom. Versions are the current releas
 | `src/viewer/main.tsx`, `src/viewer/App.tsx` | Mounts the app. Sets `data-state` on the root. Listens for `webglcontextlost` on `gl.domElement` from `onCreated`. Reload calls `location.reload()` | Scenarios 1, 2, 5 |
 | `src/viewer/viewerState.ts` + `.test.ts` | A pure reducer: `loading → ready \| no-webgl`, `loading \| ready → stopped` | Scenario 5 |
 | `src/perf/main.tsx`, `src/perf/App.tsx` | The stress scene and its readout. Reads `gl.info.render` each second for Drawn | Scenario 3 |
-| `src/perf/meter.ts` + `.test.ts` | A pure meter: frame times in; one-second windows, the lowest reading after the first frame, the time, and the verdict out: running, pass, below 30 or stopped | Scenario 3, D22 |
+| `src/perf/meter.ts` + `.test.ts` | A pure meter: frame times in; frames counted in fixed one-second slots from the first frame, the lowest slot, the time, and the verdict out: running, pass, below 30 or stopped. The last slot ends at 5:00, so the last second is always judged | Scenario 3, D22 |
 | `src/perf/StressLoad.tsx` | 100 columns sharing one `CylinderGeometry(0.6, 0.6, 8, 90, 10)`, 1,980 triangles each, `frustumCulled = false` | D22 |
 | `src/perf/Figure.tsx` | A code-built `SkinnedMesh`: about 5,000 triangles, 20 bones (hips, spine, chest, neck, head; each side shoulder, upper arm, forearm, hand, thigh, shin, foot; a root), each part's vertices weighted to its bone, walking anticlockwise round the Kaabah | O10, D22 |
 | `e2e/frame.ts` | Decodes a Playwright screenshot with pngjs and counts distinct colours | Scenario 4 |

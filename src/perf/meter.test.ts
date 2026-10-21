@@ -57,6 +57,21 @@ describe("meter", () => {
     expect(at.reading.elapsedMs).toBe(RUN_MS);
   });
 
+  it("judges a stall in the last second of the run", () => {
+    let m = run(31.25, 0, 299_008);
+    m = meterFrame(m, 299_990);
+    m = meterFrame(m, RUN_MS);
+    expect(m.reading.verdict).toBe("below-30");
+    expect(m.reading.lowest).toBe(2);
+  });
+
+  it("reads a second with no frame at all as 0 FPS", () => {
+    let m = run(60, 0, 100_000);
+    m = run(60, 102_500, RUN_MS, m);
+    expect(m.reading.verdict).toBe("below-30");
+    expect(m.reading.lowest).toBe(0);
+  });
+
   it("leaves out the wait before the first frame", () => {
     const { reading } = run(30, 8000, 8000 + RUN_MS);
     expect(reading.verdict).toBe("pass");
