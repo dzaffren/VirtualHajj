@@ -390,6 +390,17 @@ Single chunk. The pages share `scene/` and `ui/`, and the first CI run has to an
 
 Recorded as D17 to D30.
 
+## Review
+
+2026-10-21 · 8 raw findings, 6 survived, 5 fixed.
+
+- correctness · `.github/workflows/ci.yml:12` · a concurrency group per branch or PR, so an older build never deploys after a newer one · `5b4063a`
+- correctness · `src/perf/meter.ts:38` · FPS readings round down, so 29.6 FPS no longer reads as a pass · `b2bd57c`
+- correctness · `src/perf/meter.ts:47` · frames counted in fixed one-second slots, so a stall in the last second before 5:00 is judged · `933c91d`
+- correctness · `src/scene/OrbitCamera.tsx:21` · Ctrl, Cmd and Alt key presses go to the browser, so page zoom works with the scene focused · `95e5bad`
+- correctness · `index.html:34` · a plain script shows the no-WebGL 2 message when the browser can't run the bundle · `a9a34a4`
+- A03 Software Supply Chain Failures, low · `package.json:42` · no change: wrangler and the other new dependencies are needed, and the exact pins, the lockfile, the frozen install and a Pages-only token already bound them
+
 ## Open items
 
 | ID  | What                                                                                     | Type     | Raised at | Owner | Status        | Answer                                                                                                                                                                                                                       |
