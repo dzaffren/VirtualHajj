@@ -1,0 +1,62 @@
+<!-- @dsCard group="Foundations" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  main { max-width: 960px; padding: var(--vh-space-8) var(--vh-space-6); display: grid; gap: var(--vh-space-6); }
+  h1 { font: var(--vh-text-title); margin: 0; }
+  h2 { font: var(--vh-text-lead); margin: 0 0 var(--vh-space-4); }
+  p { margin: 0; color: var(--vh-ink-muted); }
+  section { padding: var(--vh-space-6); border-radius: var(--vh-radius-panel); background: var(--vh-surface); color: var(--vh-ink); border: 1px solid var(--vh-line); }
+  ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--vh-space-4); margin: 0; padding: 0; list-style: none; }
+  li { display: grid; gap: var(--vh-space-1); font: var(--vh-text-caption); }
+  li span { color: var(--vh-ink-muted); }
+  .chip { height: 56px; border-radius: var(--vh-radius-control); border: 1px solid var(--vh-line); }
+  .act { margin-top: var(--vh-space-6); min-height: var(--vh-target); padding: 0 20px; border: var(--vh-accent-edge); border-radius: var(--vh-radius-control); background: var(--vh-accent); color: var(--vh-on-accent); font: var(--vh-text-label); }
+</style>
+</head>
+<body>
+<main>
+<h1>Colour</h1>
+<p>Cream and clear sky by day, night blue by dark, one vivid orange accent that means "act here now". Every text pair is 7:1 or more. A selected item is filled with ink. Green and gold stay with the scene.</p>
+
+<section data-theme="light">
+<h2>Light · day</h2>
+<ul>
+<li><div class="chip" style="background: var(--vh-surface)"></div><strong>surface</strong><span>#FFF8EE</span></li>
+<li><div class="chip" style="background: var(--vh-sunken)"></div><strong>sunken</strong><span>#FCEBD3</span></li>
+<li><div class="chip" style="background: var(--vh-ink)"></div><strong>ink</strong><span>#2A1F14</span></li>
+<li><div class="chip" style="background: var(--vh-ink-muted)"></div><strong>ink-muted</strong><span>#4D3D2C</span></li>
+<li><div class="chip" style="background: var(--vh-line)"></div><strong>line</strong><span>#8C7259</span></li>
+<li><div class="chip" style="background: var(--vh-accent)"></div><strong>accent</strong><span>#FF9A3D</span></li>
+<li><div class="chip" style="background: var(--vh-accent-ink)"></div><strong>accent-ink</strong><span>#7A3300</span></li>
+<li><div class="chip" style="background: var(--vh-accent-hover)"></div><strong>accent-hover</strong><span>#FFB066</span></li>
+<li><div class="chip" style="background: var(--vh-mistake)"></div><strong>mistake</strong><span>#8A1F4A</span></li>
+<li><div class="chip" style="background: var(--vh-map-area)"></div><strong>map-area</strong><span>#F0D3AA</span></li>
+</ul>
+<button type="button" class="act">Show me</button>
+</section>
+
+<section data-theme="dark">
+<h2>Dark · night blue</h2>
+<ul>
+<li><div class="chip" style="background: var(--vh-surface)"></div><strong>surface</strong><span>#172231</span></li>
+<li><div class="chip" style="background: var(--vh-sunken)"></div><strong>sunken</strong><span>#223044</span></li>
+<li><div class="chip" style="background: var(--vh-ink)"></div><strong>ink</strong><span>#F7EFE3</span></li>
+<li><div class="chip" style="background: var(--vh-ink-muted)"></div><strong>ink-muted</strong><span>#D0C8BE</span></li>
+<li><div class="chip" style="background: var(--vh-line)"></div><strong>line</strong><span>#7F8A99</span></li>
+<li><div class="chip" style="background: var(--vh-accent)"></div><strong>accent</strong><span>#FFA552</span></li>
+<li><div class="chip" style="background: var(--vh-accent-ink)"></div><strong>accent-ink</strong><span>#FFB673</span></li>
+<li><div class="chip" style="background: var(--vh-accent-hover)"></div><strong>accent-hover</strong><span>#FFB873</span></li>
+<li><div class="chip" style="background: var(--vh-mistake)"></div><strong>mistake</strong><span>#FFB0BF</span></li>
+<li><div class="chip" style="background: var(--vh-map-area)"></div><strong>map-area</strong><span>#2E405A</span></li>
+</ul>
+<button type="button" class="act">Show me</button>
+</section>
+</main>
+</body>
+</html>

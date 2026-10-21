@@ -1,0 +1,19 @@
+:root {
+  --vh-space-1: 4px;
+  --vh-space-2: 8px;
+  --vh-space-3: 12px;
+  --vh-space-4: 16px;
+  --vh-space-6: 24px;
+  --vh-space-8: 32px;
+  --vh-space-12: 48px;
+  --vh-space-16: 64px;
+
+  --vh-target: 48px;
+  --vh-joystick: 128px;
+  --vh-joystick-knob: 56px;
+
+  --vh-radius-mark: 2px;
+  --vh-radius-inner: 4px;
+  --vh-radius-control: 6px;
+  --vh-radius-panel: 12px;
+}

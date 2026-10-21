@@ -1,0 +1,48 @@
+<!-- @dsCard group="Foundations" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space and shape</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  main { max-width: 960px; padding: var(--vh-space-8) var(--vh-space-6); display: grid; gap: var(--vh-space-6); }
+  h1 { font: var(--vh-text-title); margin: 0; }
+  h2 { font: var(--vh-text-lead); margin: 0; }
+  p { margin: 0; color: var(--vh-ink-muted); }
+  ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--vh-space-2); }
+  li { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: var(--vh-space-4); font: var(--vh-text-caption); }
+  .bar { height: 16px; background: var(--vh-ink); border-radius: var(--vh-radius-mark); }
+  .shapes { display: flex; flex-wrap: wrap; gap: var(--vh-space-6); align-items: flex-end; }
+  .shape { display: grid; gap: var(--vh-space-2); font: var(--vh-text-caption); }
+  .box { width: 96px; height: 64px; background: var(--vh-sunken); border: 1px solid var(--vh-line); }
+</style>
+</head>
+<body>
+<main>
+<h1>Space and shape</h1>
+<p>A 4px base. Touch targets are 48px. No shadows and no blur: tone separates surfaces.</p>
+<h2>Space</h2>
+<ul>
+<li><span>space-1 · 4</span><div class="bar" style="width: var(--vh-space-1)"></div></li>
+<li><span>space-2 · 8</span><div class="bar" style="width: var(--vh-space-2)"></div></li>
+<li><span>space-3 · 12</span><div class="bar" style="width: var(--vh-space-3)"></div></li>
+<li><span>space-4 · 16</span><div class="bar" style="width: var(--vh-space-4)"></div></li>
+<li><span>space-6 · 24</span><div class="bar" style="width: var(--vh-space-6)"></div></li>
+<li><span>space-8 · 32</span><div class="bar" style="width: var(--vh-space-8)"></div></li>
+<li><span>space-12 · 48</span><div class="bar" style="width: var(--vh-space-12)"></div></li>
+<li><span>space-16 · 64</span><div class="bar" style="width: var(--vh-space-16)"></div></li>
+</ul>
+<h2>Shape</h2>
+<div class="shapes">
+<div class="shape"><div class="box" style="border-radius: var(--vh-radius-mark)"></div>radius-mark · 2</div>
+<div class="shape"><div class="box" style="border-radius: var(--vh-radius-inner)"></div>radius-inner · 4</div>
+<div class="shape"><div class="box" style="border-radius: var(--vh-radius-control)"></div>radius-control · 6</div>
+<div class="shape"><div class="box" style="border-radius: var(--vh-radius-panel)"></div>radius-panel · 12</div>
+<div class="shape"><div class="box" style="width: var(--vh-target); height: var(--vh-target); border-radius: var(--vh-radius-control)"></div>target · 48</div>
+<div class="shape"><div class="box" style="width: var(--vh-joystick); height: var(--vh-joystick); border-radius: 50%"></div>joystick · 128</div>
+</div>
+</main>
+</body>
+</html>

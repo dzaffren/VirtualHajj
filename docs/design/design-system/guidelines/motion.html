@@ -1,0 +1,39 @@
+<!-- @dsCard group="Foundations" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  main { max-width: 960px; padding: var(--vh-space-8) var(--vh-space-6); display: grid; gap: var(--vh-space-6); }
+  h1 { font: var(--vh-text-title); margin: 0; }
+  p { margin: 0; color: var(--vh-ink-muted); }
+  table { border-collapse: collapse; font: var(--vh-text-caption); }
+  th, td { text-align: left; padding: var(--vh-space-2) var(--vh-space-4) var(--vh-space-2) 0; border-bottom: 1px solid var(--vh-line); }
+  .demo { justify-self: start; min-height: var(--vh-target); padding: 0 20px; border: var(--vh-accent-edge); border-radius: var(--vh-radius-control); background: var(--vh-accent); color: var(--vh-on-accent); font: var(--vh-text-label); transition: transform var(--vh-dur-panel) var(--vh-ease-settle); }
+  .demo:hover { transform: translateY(calc(-1 * var(--vh-move))); }
+  .demo:active { transform: scale(0.98); transition-duration: var(--vh-dur-press); }
+</style>
+</head>
+<body>
+<main>
+<h1>Motion</h1>
+<p>Tier 2 for the UI. Things arrive quickly and stop softly, with no bounce. Animate transform and opacity only. With reduced motion, movement stops and fades stay.</p>
+<table>
+<tr><th>Token</th><th>Value</th><th>Use</th></tr>
+<tr><td>dur-press</td><td>120ms</td><td>Press feedback</td></tr>
+<tr><td>dur-micro</td><td>180ms</td><td>Hover, focus, switch</td></tr>
+<tr><td>dur-panel</td><td>320ms</td><td>A panel or the station sheet enters or leaves</td></tr>
+<tr><td>dur-step</td><td>480ms</td><td>One instruction gives way to the next</td></tr>
+<tr><td>dur-reward</td><td>800ms</td><td>A badge or completion mark is revealed</td></tr>
+<tr><td>stagger</td><td>60ms</td><td>Progress marks, map stops, list items</td></tr>
+<tr><td>ease-settle</td><td>cubic-bezier(0.22, 1, 0.36, 1)</td><td>Enter</td></tr>
+<tr><td>ease-leave</td><td>cubic-bezier(0.55, 0, 1, 0.45)</td><td>Exit</td></tr>
+<tr><td>move</td><td>12px</td><td>The furthest a UI element travels</td></tr>
+</table>
+<button type="button" class="demo">Hover to see ease-settle</button>
+</main>
+</body>
+</html>

@@ -1,0 +1,23 @@
+/* Tier 2. Animate transform and opacity only. */
+:root {
+  --vh-dur-press: 120ms;
+  --vh-dur-micro: 180ms;
+  --vh-dur-panel: 320ms;
+  --vh-dur-step: 480ms;
+  --vh-dur-reward: 800ms;
+  --vh-stagger: 60ms;
+  --vh-ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --vh-ease-leave: cubic-bezier(0.55, 0, 1, 0.45);
+  --vh-move: 12px;
+}
+
+/* Movement stops; fades stay, at the micro duration. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --vh-move: 0px;
+    --vh-dur-panel: var(--vh-dur-micro);
+    --vh-dur-step: var(--vh-dur-micro);
+    --vh-dur-reward: var(--vh-dur-micro);
+    --vh-stagger: 0ms;
+  }
+}

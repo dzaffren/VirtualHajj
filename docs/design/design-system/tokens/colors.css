@@ -1,0 +1,67 @@
+/* Values and contrast: docs/design/system-brief.md */
+:root {
+  --vh-surface: #FFF8EE;
+  --vh-sunken: #FCEBD3;
+  --vh-ink: #2A1F14;
+  --vh-ink-muted: #4D3D2C;
+  --vh-line: #8C7259;
+  --vh-accent: #FF9A3D;
+  --vh-accent-ink: #7A3300;
+  --vh-accent-hover: #FFB066;
+  --vh-on-accent: #2A1F14;
+  --vh-mistake: #8A1F4A;
+  --vh-scrim: rgba(42, 31, 20, 0.5);
+  --vh-map-area: #F0D3AA;
+  /* Light accent on surface is 2.0:1, so accent fills carry an edge. */
+  --vh-accent-edge: 1.5px solid #7A3300;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --vh-surface: #172231;
+    --vh-sunken: #223044;
+    --vh-ink: #F7EFE3;
+    --vh-ink-muted: #D0C8BE;
+    --vh-line: #7F8A99;
+    --vh-accent: #FFA552;
+    --vh-accent-ink: #FFB673;
+    --vh-accent-hover: #FFB873;
+    --vh-on-accent: #172231;
+    --vh-mistake: #FFB0BF;
+    --vh-scrim: rgba(0, 0, 0, 0.55);
+    --vh-map-area: #2E405A;
+    --vh-accent-edge: 1.5px solid transparent;
+  }
+}
+
+[data-theme="dark"] {
+  --vh-surface: #172231;
+  --vh-sunken: #223044;
+  --vh-ink: #F7EFE3;
+  --vh-ink-muted: #D0C8BE;
+  --vh-line: #7F8A99;
+  --vh-accent: #FFA552;
+  --vh-accent-ink: #FFB673;
+  --vh-accent-hover: #FFB873;
+  --vh-on-accent: #172231;
+  --vh-mistake: #FFB0BF;
+  --vh-scrim: rgba(0, 0, 0, 0.55);
+  --vh-map-area: #2E405A;
+  --vh-accent-edge: 1.5px solid transparent;
+}
+
+[data-theme="light"] {
+  --vh-surface: #FFF8EE;
+  --vh-sunken: #FCEBD3;
+  --vh-ink: #2A1F14;
+  --vh-ink-muted: #4D3D2C;
+  --vh-line: #8C7259;
+  --vh-accent: #FF9A3D;
+  --vh-accent-ink: #7A3300;
+  --vh-accent-hover: #FFB066;
+  --vh-on-accent: #2A1F14;
+  --vh-mistake: #8A1F4A;
+  --vh-scrim: rgba(42, 31, 20, 0.5);
+  --vh-map-area: #F0D3AA;
+  --vh-accent-edge: 1.5px solid #7A3300;
+}

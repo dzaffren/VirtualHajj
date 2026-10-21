@@ -1,0 +1,7 @@
+/* Browsers fetch a font file only when text in that family renders, so Amiri waits for the first doa. */
+@import url("https://fonts.googleapis.com/css2?family=Amiri&family=Readex+Pro:wght@160..700&display=swap");
+
+:root {
+  --vh-font-sans: "Readex Pro", system-ui, sans-serif;
+  --vh-font-doa: "Amiri", serif;
+}

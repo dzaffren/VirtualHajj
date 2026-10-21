@@ -1,0 +1,17 @@
+/* Ratio 1.25 from an 18px body; 15px is the floor. */
+:root {
+  --vh-text-caption: 400 15px/22px var(--vh-font-sans);
+  --vh-text-body: 400 18px/28px var(--vh-font-sans);
+  --vh-text-label: 600 18px/24px var(--vh-font-sans);
+  --vh-text-lead: 500 22px/30px var(--vh-font-sans);
+  --vh-text-instruction: 600 28px/34px var(--vh-font-sans);
+  --vh-text-title: 600 35px/42px var(--vh-font-sans);
+  --vh-text-doa: 400 28px/56px var(--vh-font-doa);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --vh-text-instruction: 600 35px/42px var(--vh-font-sans);
+    --vh-text-title: 600 44px/52px var(--vh-font-sans);
+  }
+}

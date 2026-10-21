@@ -1,0 +1,36 @@
+<!-- @dsCard group="Foundations" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  main { max-width: 960px; padding: var(--vh-space-8) var(--vh-space-6); display: grid; gap: var(--vh-space-6); }
+  h1 { font: var(--vh-text-title); margin: 0; }
+  p { margin: 0; }
+  dl { display: grid; grid-template-columns: 140px 1fr; gap: var(--vh-space-4) var(--vh-space-6); margin: 0; align-items: baseline; }
+  dt { font: var(--vh-text-caption); color: var(--vh-ink-muted); }
+  dd { margin: 0; }
+  .doa { padding: var(--vh-space-4) 20px; border-radius: var(--vh-radius-control); background: var(--vh-sunken); }
+</style>
+</head>
+<body>
+<main>
+<h1>Type</h1>
+<p style="color: var(--vh-ink-muted)">Readex Pro for Latin and Arabic UI text, Amiri for doa. Ratio 1.25 from an 18px body. Nothing is smaller than 15px. The instruction and title step up from 1024px wide.</p>
+<dl>
+<dt>title</dt><dd style="font: var(--vh-text-title)">Your journey</dd>
+<dt>instruction</dt><dd style="font: var(--vh-text-instruction)">Keep the Kaabah on your left.</dd>
+<dt>lead</dt><dd style="font: var(--vh-text-lead)">Round 3 of 7</dd>
+<dt>body</dt><dd style="font: var(--vh-text-body)">Round 4 starts at the Hajar Aswad line, glowing ahead.</dd>
+<dt>body, Malay</dt><dd style="font: var(--vh-text-body)" lang="ms">Pusingan 4 bermula di garisan Hajar Aswad yang bercahaya di hadapan.</dd>
+<dt>label</dt><dd style="font: var(--vh-text-label)">Show me</dd>
+<dt>caption</dt><dd style="font: var(--vh-text-caption)">Tap the floor to walk</dd>
+<dt>Arabic UI</dt><dd style="font: var(--vh-text-lead)" lang="ar" dir="rtl">الحجر الأسود</dd>
+<dt>doa</dt><dd class="doa"><p class="vh-doa" lang="ar" dir="rtl">بِسْمِ اللهِ وَاللهُ أَكْبَرُ</p><p style="color: var(--vh-ink-muted)">Bismillāhi wallāhu akbar</p></dd>
+</dl>
+</main>
+</body>
+</html>

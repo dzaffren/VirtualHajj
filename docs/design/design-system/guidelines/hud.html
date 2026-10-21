@@ -1,0 +1,45 @@
+<!-- @dsCard group="Rules" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walking HUD</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  main { max-width: 960px; padding: var(--vh-space-8) var(--vh-space-6); display: flex; flex-wrap: wrap; gap: var(--vh-space-8); }
+  h1 { font: var(--vh-text-title); margin: 0 0 var(--vh-space-4); }
+  .phone { position: relative; width: 240px; height: 520px; flex: none; border-radius: var(--vh-radius-panel); background: #BFE3F5; border: 1px solid var(--vh-line); overflow: hidden; font: var(--vh-text-caption); }
+  .zone { position: absolute; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--vh-space-1); box-sizing: border-box; border-radius: var(--vh-radius-control); }
+  .ui { background: var(--vh-surface); color: var(--vh-ink); }
+  .clear { border: 1.5px dashed var(--vh-accent-ink); color: var(--vh-ink); background: rgba(255, 248, 238, 0.6); }
+  .rules { flex: 1 1 360px; min-width: 0; }
+  ol { margin: 0; padding-left: 22px; display: grid; gap: var(--vh-space-2); }
+</style>
+</head>
+<body>
+<main>
+<div class="phone" role="img" aria-label="Phone layout zones">
+<div class="zone ui" style="top: 8px; left: 8px; width: 120px; height: 32px">Hints switch</div>
+<div class="zone ui" style="top: 8px; right: 8px; width: 32px; height: 32px">Menu</div>
+<div class="zone ui" style="top: 48px; left: 8px; right: 8px; height: 110px">Top card: progress and one instruction</div>
+<div class="zone clear" style="top: 250px; left: 56px; right: 56px; height: 170px">Kept clear for the character</div>
+<div class="zone ui" style="bottom: 8px; left: 8px; width: 80px; height: 80px; border-radius: 50%">Joystick</div>
+<div class="zone ui" style="bottom: 8px; right: 8px; width: 88px; height: 32px">Show me</div>
+</div>
+<div class="rules">
+<h1>Walking HUD</h1>
+<ol>
+<li>Put text only on an opaque surface or sunken panel. The scene is never a text background.</li>
+<li>Keep the lower middle clear while the character walks. Put controls in the bottom corners only.</li>
+<li>Show one instruction at a time, in the top card.</li>
+<li>At a station, stop the character before the station sheet rises.</li>
+<li>Never show a score, a timer, a streak or a leaderboard.</li>
+<li>Draw characters as simple, stylised figures with no face detail.</li>
+<li>Put Arabic in its own block with dir="rtl" and lang="ar". Keep the page left to right.</li>
+<li>Use Lucide icons at a 2px stroke. Draw rite symbols and badge art as SVG in the same stroke. No emojis.</li>
+</ol>
+</div>
+</main>
+</body>
+</html>
