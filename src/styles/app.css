@@ -1,0 +1,141 @@
+@import "../../docs/design/design-system/styles.css";
+
+/* The app's layers, back to front: scene, backdrop, top card. Ported from docs/design/walking-skeleton/preview.html. */
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  overflow: hidden;
+}
+.app {
+  position: fixed;
+  inset: 0;
+}
+
+.scene {
+  cursor: grab;
+}
+.scene:active {
+  cursor: grabbing;
+}
+.scene:focus-visible {
+  outline: 2px solid var(--vh-accent-ink);
+  outline-offset: calc(-1 * var(--vh-space-1));
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--vh-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--vh-dur-panel) var(--vh-ease-leave);
+}
+[data-state="loading"] .backdrop,
+[data-state="no-webgl"] .backdrop,
+[data-state="stopped"] .backdrop {
+  opacity: 1;
+  transition: none;
+}
+
+.card {
+  position: absolute;
+  top: var(--vh-space-2);
+  left: var(--vh-space-2);
+  right: var(--vh-space-2);
+  background: var(--vh-surface);
+  border-radius: var(--vh-radius-panel);
+  padding: var(--vh-space-4);
+  display: grid;
+  gap: var(--vh-space-1);
+}
+@media (min-width: 1024px) {
+  .card {
+    right: auto;
+    width: calc(var(--vh-space-16) * 7);
+    max-width: calc(100% - 2 * var(--vh-space-4));
+    box-sizing: border-box;
+    top: var(--vh-space-4);
+    left: var(--vh-space-4);
+    padding: var(--vh-space-6);
+  }
+}
+.card-name {
+  font: var(--vh-text-lead);
+  margin: 0;
+  color: var(--vh-ink-muted);
+}
+.card-say {
+  font: var(--vh-text-instruction);
+  margin: 0;
+  display: grid;
+}
+/* Both lines share one grid cell, so the card keeps its height when the text changes. */
+.card-say > span {
+  grid-area: 1 / 1;
+  transition: opacity var(--vh-dur-micro) var(--vh-ease-settle);
+}
+.card-say .when-loading {
+  opacity: 0;
+}
+[data-state="loading"] .card-say .when-loading {
+  opacity: 1;
+}
+[data-state="loading"] .card-say .when-ready {
+  opacity: 0;
+}
+.card-hint {
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+  margin: var(--vh-space-1) 0 0;
+  transition: opacity var(--vh-dur-micro) var(--vh-ease-settle);
+}
+[data-state="loading"] .card-hint {
+  opacity: 0;
+}
+.hint-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .hint-touch {
+    display: inline;
+  }
+  .hint-mouse {
+    display: none;
+  }
+}
+.card-body {
+  font: var(--vh-text-body);
+  margin: var(--vh-space-1) 0 0;
+}
+
+/* The system's primary button, as the colour guideline defines it. */
+.primary-button {
+  justify-self: start;
+  margin-top: var(--vh-space-3);
+  min-height: var(--vh-target);
+  padding: 0 var(--vh-space-6);
+  border: var(--vh-accent-edge);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-accent);
+  color: var(--vh-on-accent);
+  font: var(--vh-text-label);
+  cursor: pointer;
+  transition:
+    background-color var(--vh-dur-micro) var(--vh-ease-settle),
+    transform var(--vh-dur-press) var(--vh-ease-settle);
+}
+.primary-button:hover {
+  background: var(--vh-accent-hover);
+}
+.primary-button:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-button:active {
+    transform: none;
+  }
+}
