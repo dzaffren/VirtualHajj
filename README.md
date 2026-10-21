@@ -18,7 +18,7 @@ A virtual, interactive 3D space for learning Hajj procedures such as tawaf, sa'i
 
 ## Features
 
-Nothing shipped yet
+- A learner opens a link on a phone or laptop and turns the camera round a plain Kaabah; `/perf` proves a scene holds 30 FPS.
 
 ## Docs
 

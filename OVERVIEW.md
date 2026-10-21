@@ -1,6 +1,6 @@
 # VirtualHajj
 
-**Status:** Active · **Updated:** 2026-10-21 by /build walking-skeleton
+**Status:** Active · **Updated:** 2026-10-21 by /ship walking-skeleton
 
 A virtual, interactive 3D space for learning Hajj procedures such as tawaf, sa'i and miqat.
 
@@ -25,11 +25,9 @@ A virtual, interactive 3D space for learning Hajj procedures such as tawaf, sa'i
 
 ## Slices
 
-Nothing shipped yet
-
-| Slice    | Status   | What it does | Page     |
-| -------- | -------- | ------------ | -------- |
-| none yet | none yet | none yet     | none yet |
+| Slice              | Status  | What it does                                                                                                                  | Page |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------- | ---- |
+| walking-skeleton   | Shipped | A learner opens a link on a phone or laptop and turns the camera round a plain Kaabah; `/perf` proves a scene holds 30 FPS. | —    |
 
 ## More
 
