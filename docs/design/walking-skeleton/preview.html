@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slice 0 screens</title>
+<link rel="stylesheet" href="../design-system/styles.css">
+<style>
+  /* Scene palette (spec O7). It lives outside the UI system; the app keeps it in one scene palette file. */
+  :root {
+    --scene-sky-day: #BFE3F5;
+    --scene-sky-night: #2E405A;
+    --scene-ground-day: #ECE6DC;
+    --scene-ground-night: #46546A;
+    --scene-kiswah: #171513;
+    --scene-kiswah-band: #C9A24A;
+    --scene-ihram: #F7F5F0;
+  }
+
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  main { position: relative; z-index: 1; max-width: calc(var(--vh-space-16) * 18); margin: 0 auto; padding: var(--vh-space-8) var(--vh-space-4) var(--vh-space-16); }
+  h1 { font: var(--vh-text-title); margin: 0 0 var(--vh-space-3); }
+  h2 { font: var(--vh-text-lead); margin: var(--vh-space-12) 0 var(--vh-space-2); }
+  .intro, .note { max-width: 62ch; margin: 0 0 var(--vh-space-4); }
+  .note { font: var(--vh-text-caption); color: var(--vh-ink-muted); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--vh-space-6); align-items: flex-start; }
+  figure { margin: 0; display: grid; gap: var(--vh-space-2); max-width: 100%; }
+  figcaption { font: var(--vh-text-caption); color: var(--vh-ink-muted); display: flex; gap: var(--vh-space-3); align-items: baseline; }
+  .replay { font: var(--vh-text-caption); color: var(--vh-accent-ink); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: var(--vh-target); }
+
+  /* A device frame. Phone frames restate the system's narrow-screen type, laptop frames its wide-screen type, so each frame reads true at any preview width. */
+  .device { position: relative; overflow: hidden; border: 1px solid var(--vh-line); border-radius: var(--vh-radius-panel); color: var(--vh-ink); }
+  .phone { width: 360px; max-width: 100%; aspect-ratio: 360 / 740;
+    --vh-text-instruction: 600 28px/34px var(--vh-font-sans);
+    --vh-text-title: 600 35px/42px var(--vh-font-sans); }
+  .laptop { width: 1024px; max-width: 100%; aspect-ratio: 16 / 10;
+    --vh-text-instruction: 600 35px/42px var(--vh-font-sans);
+    --vh-text-title: 600 44px/52px var(--vh-font-sans); }
+
+  /* The app's layers, back to front: scene, backdrop, top card. */
+  .scene { position: absolute; inset: 0; outline: none; cursor: grab; }
+  .scene:active { cursor: grabbing; }
+  .scene:focus-visible, .show-focus .scene { outline: 2px solid var(--vh-accent-ink); outline-offset: calc(-1 * var(--vh-space-1)); }
+  .backdrop { position: absolute; inset: 0; background: var(--vh-surface); opacity: 0; pointer-events: none;
+    transition: opacity var(--vh-dur-panel) var(--vh-ease-leave); }
+  .is-loading .backdrop, .no-webgl .backdrop { opacity: 1; transition: none; }
+
+  .card { position: absolute; top: var(--vh-space-2); left: var(--vh-space-2); right: var(--vh-space-2);
+    background: var(--vh-surface); border-radius: var(--vh-radius-panel); padding: var(--vh-space-4);
+    display: grid; gap: var(--vh-space-1); }
+  .laptop .card { right: auto; width: calc(var(--vh-space-16) * 7); max-width: calc(100% - 2 * var(--vh-space-4)); box-sizing: border-box; top: var(--vh-space-4); left: var(--vh-space-4); padding: var(--vh-space-6); }
+  .card-name { font: var(--vh-text-lead); margin: 0; color: var(--vh-ink-muted); }
+  .card-say { font: var(--vh-text-instruction); margin: 0; display: grid; }
+  .card-say > span { grid-area: 1 / 1; transition: opacity var(--vh-dur-micro) var(--vh-ease-settle); }
+  .card-say .when-loading { opacity: 0; }
+  .is-loading .card-say .when-loading { opacity: 1; }
+  .is-loading .card-say .when-ready { opacity: 0; }
+  .card-hint { font: var(--vh-text-caption); color: var(--vh-ink-muted); margin: var(--vh-space-1) 0 0; transition: opacity var(--vh-dur-micro) var(--vh-ease-settle); }
+  .is-loading .card-hint { opacity: 0; }
+  .card-body { font: var(--vh-text-body); margin: var(--vh-space-1) 0 0; }
+  .is-stopped .backdrop { opacity: 1; transition: none; }
+
+  /* The system's primary button, as the colour guideline defines it. */
+  .act { justify-self: start; margin-top: var(--vh-space-3); min-height: var(--vh-target); padding: 0 var(--vh-space-6);
+    border: var(--vh-accent-edge); border-radius: var(--vh-radius-control); background: var(--vh-accent); color: var(--vh-on-accent);
+    font: var(--vh-text-label); cursor: pointer;
+    transition: background-color var(--vh-dur-micro) var(--vh-ease-settle), transform var(--vh-dur-press) var(--vh-ease-settle); }
+  .act:hover { background: var(--vh-accent-hover); }
+  .act:active { transform: scale(0.98); }
+
+  /* /perf readout */
+  .readout { gap: var(--vh-space-3); }
+  .lowest { display: flex; align-items: baseline; gap: var(--vh-space-3); margin: 0; }
+  .lowest b { font: var(--vh-text-title); font-variant-numeric: tabular-nums; }
+  .lowest span { font: var(--vh-text-caption); color: var(--vh-ink-muted); max-width: 16ch; }
+  dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: var(--vh-space-1) var(--vh-space-4); }
+  dt { font: var(--vh-text-caption); color: var(--vh-ink-muted); padding-top: var(--vh-space-1); }
+  dd { margin: 0; font: var(--vh-text-body); font-variant-numeric: tabular-nums; }
+  .result { display: flex; gap: var(--vh-space-2); align-items: flex-start; margin: 0; padding-top: var(--vh-space-3); border-top: 1px solid var(--vh-line); font: var(--vh-text-label); }
+  .result svg { flex: none; width: 24px; height: 24px; margin-top: 0; }
+  .result.below { color: var(--vh-mistake); }
+  .result[hidden] { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-say > span, .card-hint { transition-duration: var(--vh-dur-micro); }
+    .act:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<main>
+  <h1>Slice 0 screens</h1>
+  <p class="intro">Every screen and state in <code>docs/specs/walking-skeleton.md</code>, built from the VirtualHajj design system. Drag any scene to turn it, or press Tab to reach one and use the arrow keys.</p>
+
+  <h2>The viewer at /</h2>
+  <p class="note">The top card sits where the walking HUD will put it in tawaf. While the scene loads, the card says so on a plain backdrop; when the first frame is drawn, the backdrop fades out over 320ms and the card shows the instruction.</p>
+  <div class="row">
+    <figure>
+      <div class="device phone is-loading" data-theme="light" data-view="viewer" data-load>
+        <div class="scene" tabindex="0" role="img" aria-label="3D view of the Kaabah. Drag, or use the arrow keys, to turn it."></div>
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say" aria-live="polite"><span class="when-loading">Loading the Kaabah…</span><span class="when-ready">Drag to look round the Kaabah.</span></p>
+          <p class="card-hint">Pinch to zoom in and out.</p>
+        </div>
+      </div>
+      <figcaption>Phone, light: loading, then ready <button class="replay" type="button" data-replay>Play again</button></figcaption>
+    </figure>
+
+    <figure>
+      <div class="device phone is-loading" data-theme="dark" data-view="viewer" data-load>
+        <div class="scene" tabindex="0" role="img" aria-label="3D view of the Kaabah. Drag, or use the arrow keys, to turn it."></div>
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say" aria-live="polite"><span class="when-loading">Loading the Kaabah…</span><span class="when-ready">Drag to look round the Kaabah.</span></p>
+          <p class="card-hint">Pinch to zoom in and out.</p>
+        </div>
+      </div>
+      <figcaption>Phone, dark: loading, then ready <button class="replay" type="button" data-replay>Play again</button></figcaption>
+    </figure>
+  </div>
+
+  <div class="row" style="margin-top: var(--vh-space-6)">
+    <figure>
+      <div class="device laptop show-focus" data-theme="light" data-view="viewer">
+        <div class="scene" tabindex="0" role="img" aria-label="3D view of the Kaabah. Drag, or use the arrow keys, to turn it."></div>
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say"><span class="when-ready">Drag to look round the Kaabah.</span></p>
+          <p class="card-hint">Scroll to zoom. With the keyboard, the arrow keys turn the view and + and − zoom.</p>
+        </div>
+      </div>
+      <figcaption>Laptop, light, with the scene focused from the keyboard</figcaption>
+    </figure>
+  </div>
+
+  <h2>When the 3D view can't be shown</h2>
+  <p class="note">Two cases, one layout. With no WebGL 2, the page stays on the plain backdrop and says what to do. If the browser drops the 3D view while it is open, the backdrop comes back over the frozen scene and offers a reload.</p>
+  <div class="row">
+    <figure>
+      <div class="device phone no-webgl" data-theme="light">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say"><span>This browser can't show the 3D view.</span></p>
+          <p class="card-body">Open this link in an up-to-date Chrome or Safari.</p>
+        </div>
+      </div>
+      <figcaption>No WebGL 2, phone, light</figcaption>
+    </figure>
+    <figure>
+      <div class="device phone no-webgl" data-theme="dark">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say"><span>This browser can't show the 3D view.</span></p>
+          <p class="card-body">Open this link in an up-to-date Chrome or Safari.</p>
+        </div>
+      </div>
+      <figcaption>No WebGL 2, phone, dark</figcaption>
+    </figure>
+    <figure>
+      <div class="device phone is-stopped" data-theme="light">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say"><span>The 3D view stopped.</span></p>
+          <p class="card-body">Reload the page to start it again.</p>
+          <button class="act" type="button" data-reload>Reload</button>
+        </div>
+      </div>
+      <figcaption>View stopped, phone, light</figcaption>
+    </figure>
+    <figure>
+      <div class="device phone is-stopped" data-theme="dark">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say"><span>The 3D view stopped.</span></p>
+          <p class="card-body">Reload the page to start it again.</p>
+          <button class="act" type="button" data-reload>Reload</button>
+        </div>
+      </div>
+      <figcaption>View stopped, phone, dark</figcaption>
+    </figure>
+  </div>
+
+  <template id="stopped-card">
+    <p class="card-name">VirtualHajj</p>
+    <p class="card-say"><span>The 3D view stopped.</span></p>
+    <p class="card-body">Reload the page to start it again.</p>
+    <button class="act" type="button" data-reload>Reload</button>
+  </template>
+
+  <h2>The stress page at /perf</h2>
+  <p class="note">A developer page; nothing links to it. It draws a fixed load round the Kaabah, 100 columns of about 2,000 triangles each and one walking figure, with culling off so the load never changes with the camera angle. The counts below are read from the renderer, not typed in. The running frame is live: its FPS is this preview page's, not a phone's. The pass and below-30 frames show example readings.</p>
+  <div class="row">
+    <figure>
+      <div class="device phone" data-theme="dark" data-view="perf" data-live>
+        <div class="scene" tabindex="0" role="img" aria-label="Stress scene: columns round the Kaabah and one walking figure."></div>
+        <div class="card readout">
+          <p class="card-name">Stress test</p>
+          <p class="lowest"><b data-lowest>–</b><span>lowest FPS since the first frame</span></p>
+          <dl>
+            <dt>Now</dt><dd data-now>–</dd>
+            <dt>Time</dt><dd data-time>0:00 of 5:00</dd>
+            <dt>Drawn</dt><dd data-drawn>–</dd>
+          </dl>
+          <p class="result" data-pass hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Pass. No second dropped below 30 FPS.</span></p>
+          <p class="result below" data-below hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span data-below-text>Below 30. The lowest second was – FPS.</span></p>
+          <p class="result below" data-stopped hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span data-stopped-text>Stopped. The browser dropped the 3D view.</span></p>
+        </div>
+      </div>
+      <figcaption>Phone, dark: running, live</figcaption>
+    </figure>
+
+    <figure>
+      <div class="device phone" data-theme="light" data-view="perf">
+        <div class="scene" tabindex="0" role="img" aria-label="Stress scene: columns round the Kaabah and one walking figure."></div>
+        <div class="card readout">
+          <p class="card-name">Stress test</p>
+          <p class="lowest"><b>41</b><span>lowest FPS since the first frame</span></p>
+          <dl>
+            <dt>Now</dt><dd>56 FPS</dd>
+            <dt>Time</dt><dd>5:00 of 5:00</dd>
+            <dt>Drawn</dt><dd data-drawn>–</dd>
+          </dl>
+          <p class="result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Pass. No second dropped below 30 FPS.</span></p>
+        </div>
+      </div>
+      <figcaption>Phone, light: pass, example readings</figcaption>
+    </figure>
+
+    <figure>
+      <div class="device phone" data-theme="light" data-view="perf">
+        <div class="scene" tabindex="0" role="img" aria-label="Stress scene: columns round the Kaabah and one walking figure."></div>
+        <div class="card readout">
+          <p class="card-name">Stress test</p>
+          <p class="lowest"><b>24</b><span>lowest FPS since the first frame</span></p>
+          <dl>
+            <dt>Now</dt><dd>31 FPS</dd>
+            <dt>Time</dt><dd>5:00 of 5:00</dd>
+            <dt>Drawn</dt><dd data-drawn>–</dd>
+          </dl>
+          <p class="result below"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Below 30. The lowest second was 24 FPS.</span></p>
+        </div>
+      </div>
+      <figcaption>Phone, light: below 30, example readings</figcaption>
+    </figure>
+
+    <figure>
+      <div class="device phone" data-theme="light" data-view="perf">
+        <div class="scene" tabindex="0" role="img" aria-label="Stress scene: columns round the Kaabah and one walking figure."></div>
+        <div class="card readout">
+          <p class="card-name">Stress test</p>
+          <p class="lowest"><b>33</b><span>lowest FPS since the first frame</span></p>
+          <dl>
+            <dt>Now</dt><dd>–</dd>
+            <dt>Time</dt><dd>2:14 of 5:00</dd>
+            <dt>Drawn</dt><dd data-drawn>–</dd>
+          </dl>
+          <p class="result below"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg><span>Stopped. The browser dropped the 3D view at 2:14.</span></p>
+        </div>
+      </div>
+      <figcaption>Phone, light: stopped, a fail, example readings</figcaption>
+    </figure>
+  </div>
+</main>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = getComputedStyle(document.documentElement);
+const hex = (name) => css.getPropertyValue(name).trim();
+const color = (name) => new THREE.Color(hex(name));
+
+// Loading: hold the backdrop until a first frame is drawn, then let it fade.
+function playLoad(device) {
+  device.classList.add('is-loading');
+  setTimeout(() => device.classList.remove('is-loading'), 1600);
+}
+for (const d of document.querySelectorAll('[data-load]')) playLoad(d);
+for (const b of document.querySelectorAll('[data-replay]')) {
+  b.addEventListener('click', () => playLoad(b.closest('figure').querySelector('.device')));
+}
+
+const canvas = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+renderer.autoClear = false;
+
+for (const b of document.querySelectorAll('[data-reload]')) b.addEventListener('click', () => location.reload());
+
+// A dropped view must never read as a pass, or leave stale counts on screen.
+let lost = false;
+canvas.addEventListener('webglcontextlost', () => {
+  lost = true;
+  for (const d of document.querySelectorAll('[data-view="viewer"]')) {
+    d.classList.remove('is-loading');
+    d.classList.add('is-stopped');
+    d.querySelector('.scene').tabIndex = -1;
+    d.querySelector('.card').replaceChildren(document.getElementById('stopped-card').content.cloneNode(true));
+    d.querySelector('[data-reload]').addEventListener('click', () => location.reload());
+  }
+  if (!done) {
+    done = true;
+    const at = first === null ? '0:00' : fmt(Math.min(performance.now() - first, RUN_MS));
+    out('stopped-text').textContent = `Stopped. The browser dropped the 3D view at ${at}.`;
+    out('stopped').hidden = false;
+    out('now').textContent = '–';
+  }
+});
+
+function kiswahTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = hex('--scene-kiswah');
+  g.fillRect(0, 0, 256, 256);
+  g.fillStyle = hex('--scene-kiswah-band');
+  g.fillRect(0, 76, 256, 16);
+  g.globalAlpha = 0.05;
+  for (let x = 0; x < 256; x += 4) g.fillRect(x, 0, 1, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+const kiswah = kiswahTexture();
+
+function baseScene(theme) {
+  const night = theme === 'dark';
+  const s = new THREE.Scene();
+  s.background = color(night ? '--scene-sky-night' : '--scene-sky-day');
+  const ground = color(night ? '--scene-ground-night' : '--scene-ground-day');
+  s.add(new THREE.HemisphereLight(0xffffff, ground, night ? 1.1 : 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, night ? 1.4 : 2.4);
+  sun.position.set(30, 50, 20);
+  s.add(sun);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(90, 64), new THREE.MeshStandardMaterial({ color: ground, roughness: 0.85 }));
+  floor.rotation.x = -Math.PI / 2;
+  s.add(floor);
+  const side = new THREE.MeshStandardMaterial({ map: kiswah, roughness: 0.9 });
+  const top = new THREE.MeshStandardMaterial({ color: color('--scene-kiswah'), roughness: 0.9 });
+  const kaabah = new THREE.Mesh(new THREE.BoxGeometry(11, 13, 12), [side, side, top, top, side, side]);
+  kaabah.position.y = 6.5;
+  s.add(kaabah);
+  s.userData.ground = ground;
+  return s;
+}
+
+function figure() {
+  const mat = new THREE.MeshStandardMaterial({ color: color('--scene-ihram'), roughness: 0.95 });
+  const g = new THREE.Group();
+  const capsule = (r, l) => new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 8, 16), mat);
+  const body = capsule(0.32, 0.9);
+  body.position.y = 1.25;
+  g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 16), mat);
+  head.position.y = 2.25;
+  g.add(head);
+  const parts = {};
+  for (const [k, x, y, r, l] of [['armL', -0.42, 1.75, 0.09, 0.55], ['armR', 0.42, 1.75, 0.09, 0.55], ['legL', -0.15, 0.85, 0.11, 0.6], ['legR', 0.15, 0.85, 0.11, 0.6]]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, y, 0);
+    const m = capsule(r, l);
+    m.position.y = -(l / 2 + r);
+    pivot.add(m);
+    g.add(pivot);
+    parts[k] = pivot;
+  }
+  g.scale.setScalar(0.75);
+  g.traverse((o) => { o.frustumCulled = false; });
+  return { g, parts };
+}
+
+function perfScene(theme) {
+  const s = baseScene(theme);
+  const geo = new THREE.CylinderGeometry(0.6, 0.6, 8, 90, 10);
+  const mat = new THREE.MeshStandardMaterial({ color: s.userData.ground, roughness: 0.7 });
+  for (let i = 0; i < 100; i++) {
+    const a = ((i % 50) / 50) * Math.PI * 2;
+    const r = i < 50 ? 36 : 44;
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(Math.cos(a) * r, 4, Math.sin(a) * r);
+    m.frustumCulled = false;
+    s.add(m);
+  }
+  const f = figure();
+  s.add(f.g);
+  s.userData.figure = f;
+  return s;
+}
+
+// Anticlockwise from above, so the Kaabah stays on the figure's left, as in tawaf.
+function walk(f, t) {
+  const a = -t * 0.12;
+  const x = Math.cos(a) * 10, z = Math.sin(a) * 10;
+  const nx = Math.cos(a - 0.01) * 10, nz = Math.sin(a - 0.01) * 10;
+  f.g.position.set(x, 0, z);
+  f.g.rotation.y = Math.atan2(nx - x, nz - z);
+  const swing = Math.sin(t * 5) * 0.5;
+  f.parts.legL.rotation.x = swing;
+  f.parts.legR.rotation.x = -swing;
+  f.parts.armL.rotation.x = -swing * 0.8;
+  f.parts.armR.rotation.x = swing * 0.8;
+}
+
+const scenes = {};
+const sceneFor = (kind, theme) => (scenes[kind + theme] ??= kind === 'perf' ? perfScene(theme) : baseScene(theme));
+
+const sph = new THREE.Spherical();
+const off = new THREE.Vector3();
+function keyOrbit(e, cam, ctl) {
+  let dTheta = 0, dPhi = 0, zoom = 1;
+  if (e.key === 'ArrowLeft') dTheta = -0.12;
+  else if (e.key === 'ArrowRight') dTheta = 0.12;
+  else if (e.key === 'ArrowUp') dPhi = -0.08;
+  else if (e.key === 'ArrowDown') dPhi = 0.08;
+  else if (e.key === '+' || e.key === '=') zoom = 0.9;
+  else if (e.key === '-' || e.key === '_') zoom = 1.1;
+  else return;
+  e.preventDefault();
+  off.copy(cam.position).sub(ctl.target);
+  sph.setFromVector3(off);
+  sph.theta += dTheta;
+  sph.phi = THREE.MathUtils.clamp(sph.phi + dPhi, 0.15, ctl.maxPolarAngle);
+  sph.radius = THREE.MathUtils.clamp(sph.radius * zoom, ctl.minDistance, ctl.maxDistance);
+  off.setFromSpherical(sph);
+  cam.position.copy(ctl.target).add(off);
+  ctl.update();
+}
+
+const views = [];
+for (const device of document.querySelectorAll('[data-view]')) {
+  const el = device.querySelector('.scene');
+  const kind = device.dataset.view;
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 400);
+  camera.position.set(kind === 'perf' ? 34 : 26, kind === 'perf' ? 20 : 12, kind === 'perf' ? 40 : 30);
+  const controls = new OrbitControls(camera, el);
+  controls.target.set(0, 6, 0);
+  controls.enableDamping = !reduced;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minDistance = 16;
+  controls.maxDistance = 70;
+  controls.maxPolarAngle = Math.PI * 0.47;
+  controls.update();
+  el.addEventListener('keydown', (e) => keyOrbit(e, camera, controls));
+  views.push({ device, el, camera, controls, scene: sceneFor(kind, device.dataset.theme) });
+}
+
+// The live readout: one-second FPS windows, starting after the first frame.
+const live = document.querySelector('[data-live]');
+const out = (k) => live.querySelector(`[data-${k}]`);
+const RUN_MS = 5 * 60 * 1000;
+let first = null, winStart = 0, winFrames = 0, lowest = Infinity, done = false;
+const fmt = (ms) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+function tick(now) {
+  if (first === null) { first = now; winStart = now; }
+  else if (!done) {
+    winFrames++;
+    if (now - winStart >= 1000) {
+      const fps = Math.round((winFrames * 1000) / (now - winStart));
+      lowest = Math.min(lowest, fps);
+      winFrames = 0;
+      winStart = now;
+      const elapsed = Math.min(now - first, RUN_MS);
+      out('now').textContent = `${fps} FPS`;
+      out('lowest').textContent = lowest;
+      out('time').textContent = `${fmt(elapsed)} of 5:00`;
+      if (elapsed >= RUN_MS) {
+        done = true;
+        if (lowest >= 30) out('pass').hidden = false;
+        else { out('below-text').textContent = `Below 30. The lowest second was ${lowest} FPS.`; out('below').hidden = false; }
+      }
+    }
+  }
+}
+
+const drawn = new Map();
+function frame(now) {
+  tick(now);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) renderer.setSize(w, h, false);
+  renderer.setScissorTest(false);
+  renderer.clear();
+  renderer.setScissorTest(true);
+  for (const s of Object.values(scenes)) if (s.userData.figure) walk(s.userData.figure, now / 1000);
+  for (const v of views) {
+    const r = v.el.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > h || r.right < 0 || r.left > w) continue;
+    v.camera.aspect = r.width / r.height;
+    v.camera.updateProjectionMatrix();
+    v.controls.update();
+    renderer.setViewport(r.left, h - r.bottom, r.width, r.height);
+    renderer.setScissor(r.left, h - r.bottom, r.width, r.height);
+    renderer.render(v.scene, v.camera);
+    if (v.device.dataset.view === 'perf' && !lost) drawn.set(v.device, `${renderer.info.render.triangles.toLocaleString('en-GB')} triangles in ${renderer.info.render.calls} draw calls`);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+setInterval(() => { for (const [d, text] of drawn) d.querySelector('[data-drawn]').textContent = text; }, 1000);
+</script>
+</body>
+</html>

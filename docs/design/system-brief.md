@@ -3,7 +3,7 @@
 **Status:** Approved · **Updated:** 2026-10-21 by /design-system
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 
-VirtualHajj is a 3D game. The learner picks a male or female character and walks the Hajj as that person, seen from behind. This system covers everything drawn on top of the scene: the walking HUD, the station sheet and the game screens. D12 sets the budget for the scene and the character.
+VirtualHajj is a 3D game. The learner picks a male or female character and walks the Hajj as that person, seen from behind. This system covers everything drawn on top of the scene: the walking HUD, the station sheet and the game screens. D22 sets the budget for the scene and the character.
 
 ```mermaid
 flowchart TB
@@ -12,7 +12,7 @@ flowchart TB
     K -->|style| G[Game screens: character pick, journey map, badges]
     H -->|leaves the lower middle clear for| C[Character, third person]
     T -->|rises while the character stands still| C
-    C -->|walks in| S[3D scene, 30 FPS budget D12]
+    C -->|walks in| S[3D scene, 30 FPS budget D22]
 ```
 
 ## Brief
@@ -35,7 +35,7 @@ flowchart TB
 | Contrast        | AAA: 7:1 for all reading text, 3:1 for controls                                             | user                  |
 | Scripts         | Malay and English, left to right; Arabic for doa and names from `tawaf` on                   | D4, user              |
 | Dark mode       | Light and dark, each designed; the default follows the device setting                       | craft floor           |
-| Oldest device   | Samsung Galaxy A35 in Chrome; a browser with no WebGL 2 gets the plain message page          | D12, walking-skeleton |
+| Oldest device   | Samsung Galaxy A35 in Chrome; a browser with no WebGL 2 gets the plain message page          | D22, walking-skeleton |
 
 | Reference         | What it gives                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------ |
@@ -66,7 +66,7 @@ vivid orange is too pale for 7:1 on cream      → orange is a fill with ink tex
 Monument Valley: small text vs older eyes      → sparse means few words, not small words
 Monument Valley: sparse UI                     → flat colour planes; tone separates surfaces, not shadow
 AAA text over a moving 3D scene                → text only on opaque panels, never on the scene
-Galaxy A35 at 30 FPS (D12)                     → no backdrop blur; animate transform and opacity only
+Galaxy A35 at 30 FPS (D22)                     → no backdrop blur; animate transform and opacity only
 Arabic from tawaf                              → Readex Pro for Latin and Arabic UI text, Amiri for doa
 Arabic inside Malay and English screens        → right-to-left blocks only; the page layout never mirrors
 Malay and English (D4)                         → no fixed-width controls; size for the longer Malay string
