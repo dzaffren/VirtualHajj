@@ -277,7 +277,7 @@ The page shows its loading card before any JavaScript runs. The app then checks 
 
 ### Changes
 
-Every file is new except the docs at the bottom. Versions are the current releases checked on 2026-10-21, pinned by the lockfile: three 0.186, @react-three/fiber 9.8, @react-three/drei 10.7, react and react-dom 19.3, vite 8.3, @vitejs/plugin-react 6.1, vitest 5.0, @playwright/test 1.64, typescript 6.0 (D28), typescript-eslint 8.72, wrangler 4.151, pngjs 7.0, pnpm 12.14, Node 24.
+Every file is new except `.gitignore` and the docs at the bottom. Versions are the current releases checked on 2026-10-21, pinned by the lockfile: three 0.186, @react-three/fiber 9.8, @react-three/drei 10.7, react and react-dom 19.3, vite 8.3, @vitejs/plugin-react 6.1, vitest 5.0, @playwright/test 1.64, typescript 6.0 (D28), typescript-eslint 8.72, wrangler 4.151, pngjs 7.0, pnpm 12.14, Node 24.
 
 | File | What changes | Why |
 | ---- | ------------ | --- |
@@ -285,6 +285,7 @@ Every file is new except the docs at the bottom. Versions are the current releas
 | `pnpm-lock.yaml` | The lockfile | D20 |
 | `pnpm-workspace.yaml` | `allowBuilds` denies the esbuild and workerd install scripts, which pnpm blocks; neither is needed to build or deploy | D20 |
 | `.nvmrc` | `24` | CI and local use the same Node |
+| `.gitignore` | Ignores `node_modules/`, `dist/`, `*.tsbuildinfo`, the Playwright output and `.wrangler/` | Keeps build and test output out of git |
 | `tsconfig.json` | Strict; `src/`, `e2e/`, config files | Type-check step |
 | `vite.config.ts` | React plugin; `appType: "mpa"`, so the local preview has no SPA fallback; `build.rolldownOptions.input` with `index.html` and `perf/index.html` | Two pages |
 | `eslint.config.js`, `.prettierrc` | typescript-eslint recommended rules; Prettier defaults | Scope |
