@@ -1,6 +1,6 @@
 # walking-skeleton
 
-**Version:** v1 · **Status:** Refined · **Type:** Skeleton · **Project type:** Web UI
+**Version:** v1 · **Status:** Draft · **Type:** Skeleton · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** None
@@ -416,6 +416,7 @@ Recorded as D17 to D30.
 | O20 | The plan named `useColorScheme.ts` and `useReducedMotion.ts`. They differ only in the media query. | flag | build | user | Decided alone | Chose: one `src/scene/useMediaQuery.ts`, called with each query; `useScenePalette()` in `palette.ts` wraps the dark-mode one. Other: two hook files with the same body. Undo: split the hook into the two named files. 2026-10-21 |
 | O21 | pnpm 12 blocked the install scripts of esbuild (from Vite) and workerd (from wrangler), and fails the install until each is allowed or denied. The plan said to allow them. | flag | build | user | Decided alone | Chose: deny both in `pnpm-workspace.yaml` `allowBuilds`. The build, the local preview and the unit tests work without them. Wrangler needs workerd only for `wrangler dev`. Other: allow both. Undo: set both to `true` in `allowBuilds`. 2026-10-21 |
 | O22 | The plan said the e2e test's first `goto` retries until the preview answers. | flag | build | user | Decided alone | Chose: a `curl --retry 12 --retry-delay 5` step in CI before Playwright, so the tests stay plain. Other: a retrying `goto` helper in `e2e/`. Undo: drop the CI step, and add the helper to both spec files. 2026-10-21 |
+| O23 | GitHub has no `CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_ACCOUNT_ID` secret, so CI cannot deploy. The e2e tests have not run on CI, and O12 is still unproven. Runs 39596834395 and 39598209944 failed at the deploy step. | question | build | user | Open | — |
 
 _Never delete this section or its rows. See references/ledger.md._
 
