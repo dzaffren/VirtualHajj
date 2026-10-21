@@ -139,3 +139,57 @@ body {
     transform: none;
   }
 }
+
+/* The /perf readout. */
+.readout {
+  display: grid;
+  gap: var(--vh-space-3);
+}
+.lowest {
+  display: flex;
+  align-items: baseline;
+  gap: var(--vh-space-3);
+  margin: 0;
+}
+.lowest b {
+  font: var(--vh-text-title);
+  font-variant-numeric: tabular-nums;
+}
+.lowest span {
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+  max-width: 16ch;
+}
+.readout dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--vh-space-1) var(--vh-space-4);
+}
+.readout dt {
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+  padding-top: var(--vh-space-1);
+}
+.readout dd {
+  margin: 0;
+  font: var(--vh-text-body);
+  font-variant-numeric: tabular-nums;
+}
+.result {
+  display: flex;
+  gap: var(--vh-space-2);
+  align-items: flex-start;
+  margin: 0;
+  padding-top: var(--vh-space-3);
+  border-top: 1px solid var(--vh-line);
+  font: var(--vh-text-label);
+}
+.result svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+.result.below {
+  color: var(--vh-mistake);
+}

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stress test · VirtualHajj</title>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- The card shows before the bundle arrives; React replaces it. -->
+      <div class="app" data-state="running">
+        <div class="card">
+          <p class="card-name">Stress test</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/perf/main.tsx"></script>
+  </body>
+</html>

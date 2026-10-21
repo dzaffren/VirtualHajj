@@ -3,9 +3,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  appType: "mpa",
   build: {
     rolldownOptions: {
-      input: ["index.html"],
+      input: ["index.html", "perf/index.html"],
     },
   },
   test: {
