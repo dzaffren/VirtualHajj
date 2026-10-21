@@ -35,7 +35,8 @@ export function meterFrame(m: Meter, at: number): Meter {
   const span = at - m.windowStart;
   let next: Meter = { ...m, windowFrames };
   if (span >= 1000) {
-    const fps = Math.round((windowFrames * 1000) / span);
+    // Rounded down, so a reading of 30 always means 30 FPS or more.
+    const fps = Math.floor((windowFrames * 1000) / span);
     const lowest = Math.min(m.reading.lowest ?? fps, fps);
     next = {
       ...m,

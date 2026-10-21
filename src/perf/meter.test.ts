@@ -35,6 +35,12 @@ describe("meter", () => {
     expect(reading.lowest).toBe(29);
   });
 
+  it("fails a run that holds 29.6 FPS", () => {
+    const { reading } = run(29.6, 0, RUN_MS);
+    expect(reading.verdict).toBe("below-30");
+    expect(reading.lowest).toBe(29);
+  });
+
   it("fails a run with one slow second", () => {
     let m = run(60, 0, 100_000);
     m = run(20, 100_050, 101_000, m);
