@@ -18,7 +18,7 @@ export function OrbitCamera() {
     const onKey = (e: KeyboardEvent) => {
       const c = controls.current;
       if (!c) return;
-      const next = orbitStep(c.object.position, c.target, e.key, orbitLimits);
+      const next = orbitStep(c.object.position, c.target, e, orbitLimits);
       if (!next) return;
       e.preventDefault();
       c.object.position.copy(next);

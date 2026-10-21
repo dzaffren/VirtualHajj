@@ -26,13 +26,22 @@ const steps: Record<string, { theta?: number; phi?: number; zoom?: number }> = {
   _: { zoom: 1.1 },
 };
 
+export interface KeyPress {
+  key: string;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+  altKey?: boolean;
+}
+
 export function orbitStep(
   position: Vector3,
   target: Vector3,
-  key: string,
+  press: KeyPress,
   limits: OrbitLimits,
 ): Vector3 | null {
-  const step = steps[key];
+  // Ctrl, Cmd and Alt with these keys are the browser's own shortcuts, such as page zoom.
+  if (press.ctrlKey || press.metaKey || press.altKey) return null;
+  const step = steps[press.key];
   if (!step) return null;
   const s = new Spherical().setFromVector3(position.clone().sub(target));
   s.theta += step.theta ?? 0;

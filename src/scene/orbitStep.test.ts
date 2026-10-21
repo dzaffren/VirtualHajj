@@ -12,7 +12,7 @@ function spherical(position: Vector3) {
 function press(key: string, times: number, from = start) {
   let position = from;
   for (let i = 0; i < times; i++) {
-    position = orbitStep(position, target, key, orbitLimits) ?? position;
+    position = orbitStep(position, target, { key }, orbitLimits) ?? position;
   }
   return position;
 }
@@ -60,7 +60,19 @@ describe("orbitStep", () => {
   });
 
   it("ignores other keys", () => {
-    expect(orbitStep(start, target, "a", orbitLimits)).toBeNull();
-    expect(orbitStep(start, target, "Tab", orbitLimits)).toBeNull();
+    expect(orbitStep(start, target, { key: "a" }, orbitLimits)).toBeNull();
+    expect(orbitStep(start, target, { key: "Tab" }, orbitLimits)).toBeNull();
+  });
+
+  it("leaves Ctrl, Cmd and Alt shortcuts to the browser", () => {
+    expect(orbitStep(start, target, { key: "=" }, orbitLimits)).not.toBeNull();
+    for (const mod of ["ctrlKey", "metaKey", "altKey"]) {
+      expect(
+        orbitStep(start, target, { key: "=", [mod]: true }, orbitLimits),
+      ).toBeNull();
+      expect(
+        orbitStep(start, target, { key: "-", [mod]: true }, orbitLimits),
+      ).toBeNull();
+    }
   });
 });
