@@ -288,7 +288,7 @@ Every file is new except the docs at the bottom. Versions are the current releas
 | `tsconfig.json` | Strict; `src/`, `e2e/`, config files | Type-check step |
 | `vite.config.ts` | React plugin; `appType: "mpa"`, so the local preview has no SPA fallback; `build.rolldownOptions.input` with `index.html` and `perf/index.html` | Two pages |
 | `eslint.config.js`, `.prettierrc` | typescript-eslint recommended rules; Prettier defaults | Scope |
-| `index.html` | The Loading card as plain markup inside `#root`, `<link>` to `src/styles/app.css`, `<title>VirtualHajj</title>` | Loading shows before the bundle arrives |
+| `index.html` | The Loading card as plain markup inside `#root`, `<link>` to `src/styles/app.css`, `<title>VirtualHajj</title>`. A plain script before the bundle swaps the card for the no-WebGL 2 message when the browser has no WebGL 2 or can't parse class static blocks, so a browser too old for the bundle never stays on Loading | Loading shows before the bundle arrives; scenario 5 |
 | `perf/index.html` | The same, with the "Stress test" card | `/perf` |
 | `src/styles/app.css` | `@import` of `../../docs/design/design-system/styles.css`, then the app's layout: backdrop, top card, primary button, focus ring. Ported from the preview's CSS | Interface |
 | `src/ui/TopCard.tsx` | The top card: name, instruction line, optional hint, body and action | Interface, D29 |
@@ -358,7 +358,7 @@ Reusing: the design system's `styles.css` and tokens, imported as they are, and 
 | 2. Phone | Drag and pinch by hand on the Galaxy A35, noted in the PR | By hand |
 | 3. Stress page | `src/perf/meter.test.ts`: 30 FPS passes and 29 fails, the verdict lands at exactly 5:00, the first frame is left out, and a dropped view is a fail. `e2e/perf.spec.ts` › "draws the full load": Drawn reads at least 200,000 triangles in at least 100 draw calls. The 5-minute run on the Galaxy A35, with a screenshot in the PR | `pnpm test`, `pnpm e2e`, by hand |
 | 4. CI | The `ci` workflow on the PR, and branch protection on `main` | GitHub |
-| 5. No view | `src/viewer/viewerState.test.ts`. `e2e/viewer.spec.ts` › "says when the view stops": calls `WEBGL_lose_context.loseContext()` and expects `data-state="stopped"`, the copy and Reload. › "says when there is no WebGL 2", in the `no-webgl` project | `pnpm test`, `pnpm e2e` |
+| 5. No view | `src/viewer/viewerState.test.ts`. `e2e/viewer.spec.ts` › "says when the view stops": calls `WEBGL_lose_context.loseContext()` and expects `data-state="stopped"`, the copy and Reload. › "says when there is no WebGL 2" and "… even before the app runs", in the `no-webgl` project. › "says when the browser is too old to run the app" | `pnpm test`, `pnpm e2e` |
 
 **E2E:** `e2e/viewer.spec.ts` › "draws the Kaabah" walks the slice: it opens the deployed URL, waits for the scene, and proves a real frame was drawn.
 
@@ -417,6 +417,7 @@ Recorded as D17 to D30.
 | O21 | pnpm 12 blocked the install scripts of esbuild (from Vite) and workerd (from wrangler), and fails the install until each is allowed or denied. The plan said to allow them. | flag | build | user | Decided alone | Chose: deny both in `pnpm-workspace.yaml` `allowBuilds`. The build, the local preview and the unit tests work without them. Wrangler needs workerd only for `wrangler dev`. Other: allow both. Undo: set both to `true` in `allowBuilds`. 2026-10-21 |
 | O22 | The plan said the e2e test's first `goto` retries until the preview answers. | flag | build | user | Decided alone | Chose: a `curl --retry 12 --retry-delay 5` step in CI before Playwright, so the tests stay plain. Other: a retrying `goto` helper in `e2e/`. Undo: drop the CI step, and add the helper to both spec files. 2026-10-21 |
 | O23 | GitHub has no `CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_ACCOUNT_ID` secret, so CI cannot deploy. The e2e tests have not run on CI, and O12 is still unproven. Runs 39596834395 and 39598209944 failed at the deploy step. | question | build | user | Resolved | You set both secrets and created the Pages project `virtualhajj` with wrangler, at `virtualhajj.pages.dev`. Run 39598209944, attempt 3, deployed and passed the e2e tests. 2026-10-21 |
+| O24 | The plan had only the React bundle replace the Loading card. A browser too old to parse the bundle, such as Safari before 16.4, stayed on "Loading the Kaabah…" for ever, and the scenario 5 phone with no WebGL 2 never saw its message. | flag | review | user | Decided alone | Chose: a plain script in `index.html`, run before the bundle, that shows the no-WebGL 2 message when the browser has no WebGL 2 or can't parse class static blocks. Other: lower Vite's build target so old browsers can parse the bundle; that is untested on old Safari, and three.js or React may still fail there. Undo: revert the review commit that adds the script, and drop its two e2e tests. 2026-10-21 |
 
 _Never delete this section or its rows. See references/ledger.md._
 

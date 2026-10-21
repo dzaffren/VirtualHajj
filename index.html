@@ -31,6 +31,24 @@
         </div>
       </div>
     </div>
+    <script>
+      // A browser that can't run the bundle would keep the Loading card for ever, so say so before the bundle runs.
+      (function () {
+        var ok = !!document.createElement("canvas").getContext("webgl2");
+        try {
+          new Function("class A { static {} }");
+        } catch (e) {
+          ok = false;
+        }
+        if (ok) return;
+        var app = document.querySelector(".app");
+        app.setAttribute("data-state", "no-webgl");
+        app.querySelector(".card").innerHTML =
+          '<p class="card-name">VirtualHajj</p>' +
+          '<p class="card-say" aria-live="polite"><span>This browser can\'t show the 3D view.</span></p>' +
+          '<p class="card-body">Open this link in an up-to-date Chrome or Safari.</p>';
+      })();
+    </script>
     <script type="module" src="/src/viewer/main.tsx"></script>
   </body>
 </html>
