@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { insideHijr } from "./mataf";
+import { body, insideHijr, lineAngle, maqam, onCircle } from "./mataf";
 import { step, walkSpeed, type Keys, type Pose, type WalkInput } from "./walk";
 
 const still: Keys = { up: false, down: false, left: false, right: false };
@@ -96,6 +96,26 @@ describe("walk.step", () => {
     expect(pose.z).toBeCloseTo(-13.2);
     expect(target).toBeNull();
     expect(insideHijr(pose.x, pose.z)).toBe(false);
+  });
+
+  it("slides round the Maqam Ibrahim, never through it", () => {
+    // An e2e lap's 30° chord on the 16 m circle, which passes 0.55 m from the Maqam's centre.
+    const a = onCircle(16, lineAngle + 0.05 + Math.PI / 6);
+    const b = onCircle(16, lineAngle + 0.05 + Math.PI / 3);
+    let walked = { pose: { ...a, facing: 0 }, target: to(b.x, b.z).target };
+    let nearest = Infinity;
+    for (let i = 0; i < 3600 && walked.target; i++) {
+      walked = step(
+        walked.pose,
+        { ...to(b.x, b.z), target: walked.target },
+        1 / 60,
+      );
+      const { x, z } = walked.pose;
+      nearest = Math.min(nearest, Math.hypot(x - maqam.x, z - maqam.z));
+    }
+    expect(nearest).toBeGreaterThanOrEqual(maqam.radius + body - 1e-9);
+    expect(walked.pose.x).toBeCloseTo(b.x);
+    expect(walked.pose.z).toBeCloseTo(b.z);
   });
 
   it("stays within 30 m of the Kaabah", () => {

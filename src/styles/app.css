@@ -610,6 +610,110 @@ body {
   height: calc(var(--vh-space-6) + var(--vh-space-1));
 }
 
+.done-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vh-space-2);
+  margin: 0;
+  font: var(--vh-text-body);
+  color: var(--vh-ink-muted);
+}
+.done-note .icon {
+  height: calc(var(--vh-space-6) + var(--vh-space-1));
+}
+
+/* The station sheet: docked at the bottom with no scrim, while the pilgrim stands still. */
+.sheet.station {
+  gap: var(--vh-space-4);
+}
+.station-name {
+  margin: 0;
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+}
+.station-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--vh-space-1) var(--vh-space-3);
+}
+.station-title {
+  margin: 0;
+  font: var(--vh-text-instruction);
+}
+.station-arabic {
+  font: var(--vh-text-lead);
+  color: var(--vh-ink-muted);
+}
+.station-body {
+  margin: 0;
+  font: var(--vh-text-body);
+}
+.station-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vh-space-2);
+}
+.rakaat {
+  display: grid;
+  gap: var(--vh-space-2);
+}
+.rakaat p {
+  margin: 0;
+  font: var(--vh-text-body);
+}
+
+/* The doa block: Arabic in Amiri on a sunken panel, then the reading and the meaning. */
+.doa {
+  display: grid;
+  gap: var(--vh-space-1);
+  padding: var(--vh-space-4);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-sunken);
+}
+.doa p {
+  margin: 0;
+}
+.doa-arabic {
+  font: var(--vh-text-doa);
+}
+.doa-reading {
+  font: var(--vh-text-body);
+  color: var(--vh-ink-muted);
+}
+.doa-meaning {
+  font: var(--vh-text-body);
+}
+
+/* A toast takes the top card's place with hints off. */
+.toast {
+  position: absolute;
+  top: calc(2 * var(--vh-space-2) + var(--vh-target));
+  left: var(--vh-space-2);
+  max-width: calc(100% - 2 * var(--vh-space-2));
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vh-space-3);
+  min-height: var(--vh-target);
+  margin: 0;
+  padding: var(--vh-space-3) var(--vh-space-4);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-surface);
+  color: var(--vh-ink);
+  font: var(--vh-text-label);
+  animation: step-in var(--vh-dur-step) var(--vh-ease-settle) both;
+}
+.toast-mistake {
+  color: var(--vh-mistake);
+}
+@media (min-width: 1024px) {
+  .toast {
+    top: calc(2 * var(--vh-space-4) + var(--vh-target));
+    left: var(--vh-space-4);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mark.done {
     animation: none;

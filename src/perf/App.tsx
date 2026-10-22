@@ -6,7 +6,7 @@ import { hasWebGL2 } from "../scene/hasWebGL2";
 import { facingAnticlockwise, onCircle } from "../scene/mataf";
 import { OrbitCamera } from "../scene/OrbitCamera";
 import { Pilgrim, type PilgrimPose } from "../scene/Pilgrim";
-import { HajarAswadLine, HijrWall } from "../scene/TawafScene";
+import { HajarAswadLine, HijrWall, MaqamIbrahim } from "../scene/TawafScene";
 import { TopCard } from "../ui/TopCard";
 import {
   clock,
@@ -134,11 +134,12 @@ export function App() {
         className="scene"
         tabIndex={0}
         role="img"
-        aria-label="Stress scene: columns round the Kaabah, the Hijr Ismail wall, the glowing Hajar Aswad line and one walking pilgrim."
+        aria-label="Stress scene: columns round the Kaabah, the Hijr Ismail wall, the Maqam Ibrahim, the glowing Hajar Aswad line and one walking pilgrim."
       >
         <BaseScene />
         <StressLoad />
         <HijrWall />
+        <MaqamIbrahim />
         <HajarAswadLine hints />
         <WalkingPilgrim />
         <OrbitCamera />

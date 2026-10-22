@@ -42,3 +42,40 @@ export function onLine(x: number, z: number) {
   const out = Math.min(Math.max(Math.hypot(x, z), corner), corner + lineLength);
   return onCircle(out, lineAngle);
 }
+
+// The Maqam Ibrahim stands about 10.5 m out from the door face, in front of the door, near the Hajar Aswad corner.
+// The spot for the two rakaat is 3 m further out, on the line from the Kaabah through the Maqam; within 3 m of it counts (O6).
+export const maqam = { x: 16, z: 2.5, radius: 0.9 };
+export const maqamSpot = { x: maqam.x + 3, z: maqam.z, radius: 3 };
+export const inSpot = (x: number, z: number) =>
+  Math.hypot(x - maqamSpot.x, z - maqamSpot.z) <= maqamSpot.radius;
+// The corner tawaf passes just before the Hajar Aswad.
+export const rukunYamani = { x: -hajarAswad.x, z: hajarAswad.z };
+// The corner tawaf passes just after the Hajar Aswad.
+export const rukunIraqi = { x: hajarAswad.x, z: -hajarAswad.z };
+
+// How far round past the Hajar Aswad line a corner is, the way tawaf walks.
+const pastLine = ({ x, z }: { x: number; z: number }) =>
+  (Math.atan2(-z, x) - lineAngle + 2 * Math.PI) % (2 * Math.PI);
+export const rukunIraqiPast = pastLine(rukunIraqi);
+export const rukunYamaniPast = pastLine(rukunYamani);
+
+// With hints on, the pilgrim stops for istilam within this many metres of the line, before round 1.
+export const stopBefore = 1;
+
+// Where the pilgrim stands for istilam: its own spot, or 0.6 m before the line if one frame carried it past. It faces the Hajar Aswad corner.
+export function istilamPose(x: number, z: number) {
+  const out = Math.hypot(x, z);
+  let past = Math.atan2(-z, x) - lineAngle;
+  past -= 2 * Math.PI * Math.round(past / (2 * Math.PI));
+  const at = past > 0 ? onCircle(out, lineAngle - 0.6 / out) : { x, z };
+  return {
+    ...at,
+    facing: Math.atan2(hajarAswad.x - at.x, hajarAswad.z - at.z),
+  };
+}
+
+// Where the pilgrim stands for the two rakaat: where it entered the spot, facing the Kaabah.
+export function rakaatPose(x: number, z: number) {
+  return { x, z, facing: Math.atan2(-x, -z) };
+}

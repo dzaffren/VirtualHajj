@@ -3,5 +3,5 @@
 
 :root {
   --vh-font-sans: "Readex Pro", system-ui, sans-serif;
-  --vh-font-doa: "Amiri", serif;
+  --vh-font-doa: "Amiri", "Readex Pro", serif;
 }

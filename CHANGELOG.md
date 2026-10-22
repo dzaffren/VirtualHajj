@@ -16,3 +16,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Turn the hints off to count the rounds alone and press Done.
 - `/` and `/tawaf` open in Malay on a Malay browser, and a language choice switches between Malay and English.
 - `/perf` draws the tawaf pilgrim, the Hijr Ismail wall and the line, so its 5-minute run covers `/tawaf`.
+- With hints on, the pilgrim stops at the Hajar Aswad line before round 1 to teach istilam, in Arabic with its reading and meaning, and Show me how raises the pilgrim's hand. Each later round starts with a reminder.
+- With hints on, the Rukun Yamani doa shows in the top card from the Rukun Yamani to the line, in every round.
+- After seven rounds, walk to the spot behind the Maqam Ibrahim to pray two rakaat, then press Finish tawaf. With hints off, the done card notes when the rakaat were left out.

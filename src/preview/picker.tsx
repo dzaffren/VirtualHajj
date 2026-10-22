@@ -13,7 +13,7 @@ type Size = keyof typeof sizes;
 const groups = [...new Set(states.map((s) => s.group))];
 
 function Picker() {
-  const [id, setId] = useState("round3");
+  const [id, setId] = useState("istilam");
   const [lang, setLang] = useState<Lang>("en");
   const [size, setSize] = useState<Size>("phone");
   const s = states.find((x) => x.id === id)!;

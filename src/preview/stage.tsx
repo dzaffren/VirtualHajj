@@ -83,6 +83,7 @@ function Tawaf({
             pose={pose}
             target={tap}
             mistake={phase === "void"}
+            spot={hints && phase === "to-maqam"}
           />
         </Canvas>
       )}
@@ -100,6 +101,10 @@ function Tawaf({
         onBack={() => {}}
         onTurnToLine={() => {}}
         onReload={() => {}}
+        onStartRound={() => {}}
+        onShowMe={() => {}}
+        onFinish={() => {}}
+        onTurnToSpot={() => {}}
       />
     </div>
   );
