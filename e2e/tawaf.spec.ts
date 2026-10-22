@@ -127,3 +127,38 @@ test("the menu takes focus, and Escape gives it back", async ({ page }) => {
   await expect(menu).toHaveCount(0);
   await expect(menuButton).toBeFocused();
 });
+
+test("switches to Malay in the middle of a tawaf", async ({ page }) => {
+  await openTawaf(page);
+  await walkToLine(page);
+  await walkLaps(page, 1);
+  const card = page.locator(".card");
+  await expect(card).toContainText("Round 2 of 7");
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("radio", { name: "Bahasa Melayu" }).click();
+  await page.getByRole("button", { name: "Teruskan" }).click();
+  await expect(card).toContainText("Pusingan 2 daripada 7");
+  await walkLaps(page, 1);
+  await expect(card).toContainText("Pusingan 3 daripada 7");
+
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ms");
+  await expect(
+    page.getByText("Seret untuk melihat sekeliling Kaabah."),
+  ).toBeVisible();
+});
+
+test.describe("on a Malay phone", () => {
+  test.use({ locale: "ms-MY" });
+
+  test("starts in Malay on a Malay phone", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: "Mula tawaf" }).click();
+    await expect(page).toHaveURL(/\/tawaf\/$/);
+    await openTawaf(page);
+    await expect(page.getByText("Sebelum mula")).toBeVisible();
+    await walkToLine(page);
+    await expect(page.getByText("Pusingan 1 daripada 7")).toBeVisible();
+  });
+});

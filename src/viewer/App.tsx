@@ -6,6 +6,8 @@ import { canvasConfig } from "../scene/canvasConfig";
 import { FirstFrame } from "../scene/FirstFrame";
 import { hasWebGL2 } from "../scene/hasWebGL2";
 import { OrbitCamera } from "../scene/OrbitCamera";
+import { useLang } from "../settings";
+import { LanguageChoice } from "../ui/LanguageChoice";
 import { PrimaryButton } from "../ui/PrimaryButton";
 import { TopCard } from "../ui/TopCard";
 import { viewerState, type ViewerState } from "./viewerState";
@@ -17,6 +19,8 @@ export function App() {
     (initial: ViewerState) =>
       hasWebGL2() ? initial : viewerState(initial, "no-webgl"),
   );
+  const [lang, saveLang] = useLang();
+  const t = copy[lang];
   const loading = state === "loading";
 
   return (
@@ -27,7 +31,7 @@ export function App() {
           className="scene"
           tabIndex={state === "ready" ? 0 : -1}
           role="img"
-          aria-label="3D view of the Kaabah. Drag, or use the arrow keys, to turn it."
+          aria-label={t.viewerLabel}
           onCreated={({ gl }) =>
             gl.domElement.addEventListener("webglcontextlost", () =>
               dispatch("context-lost"),
@@ -42,51 +46,57 @@ export function App() {
       <div className="backdrop" />
       {state === "no-webgl" && (
         <TopCard
-          name="VirtualHajj"
-          say={<span>This browser can't show the 3D view.</span>}
-          body="Open this link in an up-to-date Chrome or Safari."
+          name={t.appName}
+          say={<span>{t.noWebgl}</span>}
+          body={t.noWebglNext}
         />
       )}
       {state === "stopped" && (
         <TopCard
-          name="VirtualHajj"
-          say={<span>The 3D view stopped.</span>}
-          body="Reload the page to start it again."
+          name={t.appName}
+          say={<span>{t.stopped}</span>}
+          body={t.stoppedNext}
           action={
             <PrimaryButton onClick={() => location.reload()}>
-              Reload
+              {t.reload}
             </PrimaryButton>
           }
         />
       )}
       {(loading || state === "ready") && (
         <TopCard
-          name="VirtualHajj"
+          name={t.appName}
           say={
             <>
               <span className="when-loading" aria-hidden={!loading}>
-                Loading the Kaabah…
+                {t.loading}
               </span>
               <span className="when-ready" aria-hidden={loading}>
-                Drag to look round the Kaabah.
+                {t.viewerSay}
               </span>
             </>
           }
           hint={
             <>
-              <span className="hint-touch">Pinch to zoom in and out.</span>
-              <span className="hint-mouse">
-                Scroll to zoom. With the keyboard, the arrow keys turn the view
-                and + and − zoom.
-              </span>
+              <span className="hint-touch">{t.viewerTouch}</span>
+              <span className="hint-mouse">{t.viewerMouse}</span>
             </>
           }
           action={
             <a className="primary-button" href="/tawaf/">
-              {copy.en.startTawaf}
+              {t.startTawaf}
             </a>
           }
-        />
+        >
+          <div className="lang-row">
+            <p>{t.language}</p>
+            <LanguageChoice
+              label={t.language}
+              lang={lang}
+              onChange={saveLang}
+            />
+          </div>
+        </TopCard>
       )}
     </div>
   );

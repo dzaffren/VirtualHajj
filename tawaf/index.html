@@ -14,11 +14,26 @@
         <div class="card">
           <p class="card-name">Tawaf</p>
           <p class="card-say" aria-live="polite">
-            <span>Loading the Kaabah…</span>
+            <span data-ms="Memuatkan Kaabah…">Loading the Kaabah…</span>
           </p>
         </div>
       </div>
     </div>
+    <script>
+      // Before the bundle runs: the learner's language, as src/settings.ts picks it, so a Malay browser never sees English first.
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("vh.lang");
+        } catch (e) {}
+        var first = (navigator.language || "").split("-")[0].toLowerCase();
+        var ms = stored === "ms" || (stored !== "en" && first === "ms");
+        document.documentElement.lang = ms ? "ms" : "en";
+        var swap = document.querySelectorAll("[data-ms]");
+        for (var i = 0; ms && i < swap.length; i++)
+          swap[i].textContent = swap[i].getAttribute("data-ms");
+      })();
+    </script>
     <script type="module" src="/src/tawaf/main.tsx"></script>
   </body>
 </html>

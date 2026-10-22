@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { copy, type Lang } from "../copy";
+import { copy } from "../copy";
 import { canvasConfig } from "../scene/canvasConfig";
 import { FirstFrame } from "../scene/FirstFrame";
 import { hasWebGL2 } from "../scene/hasWebGL2";
@@ -13,7 +13,7 @@ import {
 import type { PilgrimPose } from "../scene/Pilgrim";
 import { TawafScene } from "../scene/TawafScene";
 import type { Keys, Point } from "../scene/walk";
-import { useHints } from "../settings";
+import { useHints, useLang } from "../settings";
 import { viewerState, type ViewerState } from "../viewer/viewerState";
 import type { HudView } from "./hudView";
 import { TawafHud } from "./TawafHud";
@@ -49,7 +49,7 @@ export function App() {
     (initial: ViewerState) =>
       hasWebGL2() ? initial : viewerState(initial, "no-webgl"),
   );
-  const lang: Lang = "en";
+  const [lang, saveLang] = useLang();
   const [hints, saveHints] = useHints();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -138,7 +138,7 @@ export function App() {
   };
 
   return (
-    <div className="app" data-state={state} lang={lang}>
+    <div className="app" data-state={state}>
       {state !== "no-webgl" && (
         <Canvas
           {...canvasConfig}
@@ -177,7 +177,7 @@ export function App() {
         lang={lang}
         menuOpen={menuOpen}
         onHints={onHints}
-        onLang={() => {}}
+        onLang={saveLang}
         onMenu={setMenuOpen}
         onDone={onDone}
         onStartAgain={startAgain}

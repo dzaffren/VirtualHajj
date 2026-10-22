@@ -14,7 +14,7 @@
     "e2e": "playwright test",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "format": "prettier --write src e2e index.html tawaf perf *.config.*"
+    "format": "prettier --write src e2e index.html perf *.config.*"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",

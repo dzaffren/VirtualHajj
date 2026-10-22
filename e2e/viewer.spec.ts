@@ -9,6 +9,25 @@ test("draws the Kaabah", async ({ page }) => {
   expect(lowerHalfColours(shot)).toBeGreaterThan(1);
 });
 
+test.describe("on a Malay browser", () => {
+  test.use({ locale: "ms-MY" });
+
+  test("opens in Malay on a Malay browser", async ({ page }) => {
+    await page.route("**/assets/*.js", (route) => route.abort());
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ms");
+    await expect(page.getByText("Memuatkan Kaabah…")).toBeVisible();
+
+    await page.unroute("**/assets/*.js");
+    await page.reload();
+    await expect(page.locator(".app")).toHaveAttribute("data-state", "ready");
+    await expect(
+      page.getByText("Seret untuk melihat sekeliling Kaabah."),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Mula tawaf" })).toBeVisible();
+  });
+});
+
 test("says when the view stops", async ({ page }) => {
   await page.goto("/");
   const app = page.locator(".app");

@@ -39,6 +39,8 @@ export const copy = {
     tawaf: "Tawaf",
     loading: "Loading the Kaabah…",
     viewerSay: "Drag to look round the Kaabah.",
+    viewerLabel:
+      "3D view of the Kaabah. Drag, or use the arrow keys, to turn it.",
     viewerTouch: "Pinch to zoom in and out.",
     viewerMouse:
       "Scroll to zoom. With the keyboard, the arrow keys turn the view and + and − zoom.",
@@ -115,6 +117,8 @@ export const copy = {
     tawaf: "Tawaf",
     loading: "Memuatkan Kaabah…",
     viewerSay: "Seret untuk melihat sekeliling Kaabah.",
+    viewerLabel:
+      "Paparan 3D Kaabah. Seret, atau guna kekunci anak panah, untuk memusingkannya.",
     viewerTouch: "Cubit untuk zum masuk dan keluar.",
     viewerMouse:
       "Tatal untuk zum. Dengan papan kekunci, kekunci anak panah memusingkan pandangan, dan + serta − untuk zum.",
