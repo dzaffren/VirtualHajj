@@ -219,6 +219,11 @@ test("Show me how lowers the sheet and brings it back", async ({ page }) => {
   await expect(
     istilam.getByRole("button", { name: "Start round 1" }),
   ).toBeFocused();
+  // The doa shows in Readex Pro until Amiri loads, or if it fails.
+  await expect(istilam.locator(".doa-arabic")).toHaveCSS(
+    "font-family",
+    /^"?Amiri"?, "?Readex Pro"?,/,
+  );
   await istilam.getByRole("button", { name: "Show me how" }).click();
   await expect(istilam).toHaveCount(0);
   await expect(istilam).toBeVisible();
