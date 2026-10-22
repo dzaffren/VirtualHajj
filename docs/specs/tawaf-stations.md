@@ -437,52 +437,7 @@ Single chunk. The rules, the `Walker`, `App` and the e2e helpers all change for 
 
 ## Decisions to record
 
-Drafted at pauses 1 to 3. `/build` appends them to `DECISIONS.md` exactly as below, and sets D40's Status to `superseded by D50`.
-
-```markdown
-## D45 · 2026-10-22 · Istilam: a station sheet before round 1, then a reminder at the start of each later round
-
-Why: istilam is sunnah at the start of each round, seven in all (O2). A pilgrim in the crowd points the right hand at the Hajar Aswad, says "Bismillāhi wallāhu akbar", and kisses the hand, as al-Bujairimi and Zakariyya al-Ansari teach in the Shafi'i rulings (O17). One stop teaches the words and the gesture, and seven stops would break a walk of about 3 minutes. With hints off nothing shows, because nothing checks a sunnah.
-Rejected: a sheet at every crossing (seven stops in one tawaf), a sheet before round 1 only (rounds 2 to 7 never practise it), eight istilam, with one more when round 7 ends (the user chose seven), a point with no kiss (the Shafi'i books teach the kiss), the sheet with hints off (it gives the answer away on the learner's own test).
-Source: docs/specs/tawaf-stations.md
-Status: active
-
-## D46 · 2026-10-22 · The Rukun Yamani doa shows in the top card while the pilgrim walks
-
-Why: pilgrims say "Rabbanā ātinā…" as they walk from the Rukun Yamani to the Hajar Aswad, so nobody stops. The top card shows it in each round, with hints on.
-Rejected: a stop at the Rukun Yamani in round 1 (pilgrims do not stop there), a doa for each round from the Tabung Haji books (any doa is fine in the rest of the round, and it adds seven Arabic texts to check), a line on touching the Rukun Yamani (most pilgrims can't reach it in the crowd, and it adds one more ruling to check).
-Source: docs/specs/tawaf-stations.md
-Status: active
-
-## D47 · 2026-10-22 · After the rounds, the learner prays two rakaat behind the Maqam Ibrahim before the done card
-
-Why: two rakaat behind the Maqam Ibrahim follow every tawaf, as a sunnah in the Shafi'i rulings (D1). The spot counts within 3 m of a point 3 m behind the Maqam, on the line from the Kaabah through it. The sheet teaches al-Kafirun in the first rakaat and al-Ikhlas in the second, after al-Fatihah.
-Rejected: the done card first, with a button to the rakaat (it puts the rakaat after the end), anywhere behind the Maqam up to 10 m (too loose to teach the place), the niat in Arabic on the sheet (one more Arabic text to check), one line with no surahs (it leaves out the sunnah surahs).
-Source: docs/specs/tawaf-stations.md
-Status: active
-
-## D48 · 2026-10-22 · With hints off, the learner ends the rounds and goes to the Maqam Ibrahim alone
-
-Why: hints off is the learner's own test (D33). Done at seven says "Seven rounds count.", and nothing guides the learner after it. A pilgrim in Makkah has no Done to press, so arrival behind the Maqam with seven or more counted acts as Done. Under seven, the spot does nothing, because learners walk across it in the rounds. Finish tawaf ends without the rakaat, and the done card notes them as a sunnah left out, not a mistake.
-Rejected: the done card at Done (a hints-off learner never practises the rakaat), a top card that says to walk to the Maqam (that is a hint), a spot that does nothing until Done (a learner who goes straight to pray, as in Makkah, gets no answer), "Not done yet" at the spot under seven (it trips a learner who walks across the spot in round 3).
-Source: docs/specs/tawaf-stations.md
-Status: active
-
-## D49 · 2026-10-22 · Show me how shows istilam on the pilgrim, and the walking HUD has no Show me
-
-Why: words describe a gesture badly, so the pilgrim raises its right hand to the Hajar Aswad when the learner asks. On the walk, the glowing target and the edge arrow already show the way (tawaf O19). This closes the hand-off in tawaf O20.
-Rejected: a Show me button in the walking HUD (it repeats the glow and the edge arrow), no demo (words alone describe a gesture badly), a demo of the two rakaat (a prayer animation is a lot of figure work, and learners already know how to pray).
-Source: docs/specs/tawaf-stations.md
-Status: active
-
-## D50 · 2026-10-22 · The tawaf camera turns towards the Kaabah, and no further
-
-Why: a portrait phone sees about 24° across, so a camera straight behind a walking figure never shows the Kaabah, and the rule is "keep the Kaabah on your left". The camera stays behind and above the figure. It turns up to 35° towards the Kaabah on a landscape screen, and up to 62° and further back on a portrait one. Walking the wrong way, it turns right, and the Kaabah shows on that side. It turns no further than the Kaabah is, so at a station, where the pilgrim faces the Kaabah, it stands straight behind.
-Rejected: a camera straight behind the figure on the walk (the Kaabah is off screen on a phone), a fixed 35° or 62° turn (at a station, the camera looks past the Kaabah at the floor).
-Supersedes: D40
-Source: docs/specs/tawaf-stations.md
-Status: active
-```
+Recorded as D45, D46, D47, D48, D49, D50.
 
 ## Open items
 
