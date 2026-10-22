@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { StrictMode, useEffect, useState } from "react";
+import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { copy, type Lang } from "../copy";
 import { BaseScene } from "../scene/BaseScene";
@@ -65,9 +65,10 @@ function Tawaf({
   const phase = s.view.phase;
   const covered =
     phase === "loading" || phase === "no-webgl" || phase === "stopped";
-  const tap = s.tap
-    ? onCircle(16, Math.atan2(-s.pose.z, s.pose.x) + 0.2)
-    : null;
+  const pose = useRef(s.pose);
+  const tap = useRef(
+    s.tap ? onCircle(16, Math.atan2(-s.pose.z, s.pose.x) + 0.2) : null,
+  );
   return (
     <div className="app" data-state={covered ? phase : "ready"} lang={lang}>
       {webgl2 && phase !== "no-webgl" && (
@@ -79,8 +80,8 @@ function Tawaf({
         >
           <TawafScene
             hints={hints}
-            pilgrim={s.pose}
-            tap={tap}
+            pose={pose}
+            target={tap}
             mistake={phase === "void"}
           />
         </Canvas>

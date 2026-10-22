@@ -1,30 +1,26 @@
-import { useThree } from "@react-three/fiber";
-import { useLayoutEffect, useMemo } from "react";
-import { ExtrudeGeometry, Shape } from "three";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
+import { useMemo, useRef, type RefObject } from "react";
+import { ExtrudeGeometry, Group, Shape, Vector3 } from "three";
 import { BaseScene } from "./BaseScene";
 import { hajarAswad, hijr, lineLength } from "./mataf";
 import { useScenePalette } from "./palette";
-import { Pilgrim } from "./Pilgrim";
+import { Pilgrim, type PilgrimPose } from "./Pilgrim";
+import { useMediaQuery } from "./useMediaQuery";
 import { useToken } from "./useToken";
-
-export interface PilgrimPose {
-  x: number;
-  z: number;
-  facing: number;
-  stride: number;
-}
+import type { Point } from "./walk";
 
 interface TawafSceneProps {
   hints: boolean;
-  pilgrim: PilgrimPose;
-  tap: { x: number; z: number } | null;
+  pose: RefObject<PilgrimPose>;
+  target: RefObject<Point | null>;
   mistake: boolean;
+  onTap?: (x: number, z: number) => void;
 }
 
 const out = Math.hypot(hajarAswad.x, hajarAswad.z);
 const outward = Math.atan2(hajarAswad.x / out, hajarAswad.z / out);
 
-function HijrWall() {
+export function HijrWall() {
   const p = useScenePalette();
   const geometry = useMemo(() => {
     const { faceZ, radius, halfSpan, thickness, height } = hijr;
@@ -50,7 +46,7 @@ function HijrWall() {
 }
 
 // The line from the Hajar Aswad corner across the mataf. With hints on it glows in the accent; with hints off it is a plain marking.
-function HajarAswadLine({ hints }: { hints: boolean }) {
+export function HajarAswadLine({ hints }: { hints: boolean }) {
   const p = useScenePalette();
   const accent = useToken("--vh-accent");
   const accentInk = useToken("--vh-accent-ink");
@@ -87,23 +83,28 @@ function HajarAswadLine({ hints }: { hints: boolean }) {
   );
 }
 
+// A floor ring that follows a spot each frame, and hides while there is none.
 function FloorRing({
-  x,
-  z,
+  at,
   inner,
   outer,
   color,
   dot,
 }: {
-  x: number;
-  z: number;
+  at: RefObject<Point | null>;
   inner: number;
   outer: number;
   color: string;
   dot: boolean;
 }) {
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    const g = group.current!;
+    g.visible = at.current !== null;
+    if (at.current) g.position.set(at.current.x, 0.016, at.current.z);
+  });
   return (
-    <group position={[x, 0.016, z]} rotation-x={-Math.PI / 2}>
+    <group ref={group} rotation-x={-Math.PI / 2}>
       <mesh>
         <ringGeometry args={[inner, outer, 48]} />
         <meshBasicMaterial color={color} depthWrite={false} />
@@ -121,44 +122,69 @@ function FloorRing({
 // Third person: behind and above the figure, turned towards the Kaabah so it stays in frame.
 // A portrait phone sees about 24° across, so it turns further and stands further back.
 // Walking the wrong way, the turn goes right, and the learner sees the Kaabah on that side.
-function ThirdPersonCamera({ x, z, facing }: PilgrimPose) {
-  const camera = useThree((s) => s.camera);
-  const portrait = useThree((s) => s.size.width < s.size.height);
-  useLayoutEffect(() => {
+// The camera eases after the figure, and cuts with reduced motion.
+function ThirdPersonCamera({ pose }: { pose: RefObject<PilgrimPose> }) {
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const look = useRef<Vector3 | null>(null);
+  const want = useMemo(() => ({ at: new Vector3(), look: new Vector3() }), []);
+  useFrame(({ camera, size }, delta) => {
+    const { x, z, facing } = pose.current;
+    const portrait = size.width < size.height;
     const kaabahOnLeft = Math.cos(facing) * -x + -Math.sin(facing) * -z > 0;
     const angle = ((portrait ? 62 : 35) * Math.PI) / 180;
     const back = portrait ? 14 : 10;
     const turn = facing + (kaabahOnLeft ? angle : -angle);
     const dx = Math.sin(turn);
     const dz = Math.cos(turn);
-    camera.position.set(x - dx * back, 8, z - dz * back);
-    camera.lookAt(x + dx * 4, 1, z + dz * 4);
-  }, [camera, portrait, x, z, facing]);
+    want.at.set(x - dx * back, 8, z - dz * back);
+    want.look.set(x + dx * 4, 1, z + dz * 4);
+    if (!look.current || reduced) {
+      camera.position.copy(want.at);
+      look.current = want.look.clone();
+    } else {
+      const k = 1 - Math.exp(-delta * 4);
+      camera.position.lerp(want.at, k);
+      look.current.lerp(want.look, k);
+    }
+    camera.lookAt(look.current);
+  });
   return null;
 }
 
 // The mataf for tawaf: the base scene, the Hijr Ismail wall, the Hajar Aswad line and frame, and the pilgrim.
-export function TawafScene({ hints, pilgrim, tap, mistake }: TawafSceneProps) {
+// A tap or click on the floor, the Kaabah or the wall gives the spot to walk to.
+export function TawafScene({
+  hints,
+  pose,
+  target,
+  mistake,
+  onTap,
+}: TawafSceneProps) {
   const ink = useToken("--vh-ink");
   const mistakeColor = useToken("--vh-mistake");
+  const tap = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    onTap?.(e.point.x, e.point.z);
+  };
   return (
     <>
-      <BaseScene />
-      <HijrWall />
+      <group onPointerDown={onTap && tap}>
+        <BaseScene />
+        <HijrWall />
+      </group>
       <HajarAswadLine hints={hints} />
-      <Pilgrim {...pilgrim} />
-      {tap && <FloorRing {...tap} inner={0.42} outer={0.52} color={ink} dot />}
+      <Pilgrim pose={pose} />
+      <FloorRing at={target} inner={0.42} outer={0.52} color={ink} dot />
       {mistake && (
         <FloorRing
-          x={pilgrim.x}
-          z={pilgrim.z}
+          at={pose}
           inner={0.8}
           outer={0.92}
           color={mistakeColor}
           dot={false}
         />
       )}
-      <ThirdPersonCamera {...pilgrim} />
+      <ThirdPersonCamera pose={pose} />
     </>
   );
 }

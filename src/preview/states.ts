@@ -1,5 +1,5 @@
 import { facingAnticlockwise, lineAngle, onCircle } from "../scene/mataf";
-import type { PilgrimPose } from "../scene/TawafScene";
+import type { PilgrimPose } from "../scene/Pilgrim";
 import type { HudView } from "../tawaf/hudView";
 
 export interface PreviewState {

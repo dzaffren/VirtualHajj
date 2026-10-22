@@ -1,22 +1,14 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useReducer, useRef } from "react";
+import { Canvas } from "@react-three/fiber";
+import { useReducer } from "react";
+import { copy } from "../copy";
 import { BaseScene } from "../scene/BaseScene";
 import { canvasConfig } from "../scene/canvasConfig";
+import { FirstFrame } from "../scene/FirstFrame";
 import { hasWebGL2 } from "../scene/hasWebGL2";
 import { OrbitCamera } from "../scene/OrbitCamera";
 import { PrimaryButton } from "../ui/PrimaryButton";
 import { TopCard } from "../ui/TopCard";
 import { viewerState, type ViewerState } from "./viewerState";
-
-function FirstFrame({ onFrame }: { onFrame: () => void }) {
-  const drawn = useRef(false);
-  useFrame(() => {
-    if (drawn.current) return;
-    drawn.current = true;
-    onFrame();
-  });
-  return null;
-}
 
 export function App() {
   const [state, dispatch] = useReducer(
@@ -88,6 +80,11 @@ export function App() {
                 and + and − zoom.
               </span>
             </>
+          }
+          action={
+            <a className="primary-button" href="/tawaf/">
+              {copy.en.startTawaf}
+            </a>
           }
         />
       )}

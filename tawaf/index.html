@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tawaf · VirtualHajj</title>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- The Loading card shows before the bundle arrives; React replaces it with the same markup. -->
+      <div class="app" data-state="loading">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">Tawaf</p>
+          <p class="card-say" aria-live="polite">
+            <span>Loading the Kaabah…</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/tawaf/main.tsx"></script>
+  </body>
+</html>

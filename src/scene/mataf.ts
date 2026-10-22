@@ -22,3 +22,23 @@ export function onCircle(r: number, angle: number) {
 export function facingAnticlockwise(angle: number) {
   return Math.atan2(-Math.sin(angle), -Math.cos(angle));
 }
+
+// Inside the Hijr Ismail: past the Kaabah's face, and nearer the arc's centre than the wall's inner face.
+export function insideHijr(x: number, z: number) {
+  return (
+    z < hijr.faceZ &&
+    Math.hypot(x, z - hijr.faceZ) < hijr.radius - hijr.thickness / 2
+  );
+}
+
+// The walking limits: the Kaabah's 11 x 12 m footprint as half sizes, how close the pilgrim's centre comes to a wall, and how far out the mataf goes.
+export const kaabah = { halfX: 5.5, halfZ: 6 };
+export const body = 0.4;
+export const edge = 30;
+
+// The point on the Hajar Aswad line as far out as a spot, for turning towards the line.
+export function onLine(x: number, z: number) {
+  const corner = Math.hypot(hajarAswad.x, hajarAswad.z);
+  const out = Math.min(Math.max(Math.hypot(x, z), corner), corner + lineLength);
+  return onCircle(out, lineAngle);
+}

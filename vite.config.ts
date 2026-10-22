@@ -6,7 +6,7 @@ export default defineConfig({
   appType: "mpa",
   build: {
     rolldownOptions: {
-      input: ["index.html", "perf/index.html"],
+      input: ["index.html", "tawaf/index.html", "perf/index.html"],
     },
   },
   test: {

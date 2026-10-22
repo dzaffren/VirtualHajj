@@ -1,4 +1,5 @@
-import { useLayoutEffect, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef, type RefObject } from "react";
 import {
   Bone,
   BoxGeometry,
@@ -7,6 +8,7 @@ import {
   Color,
   CylinderGeometry,
   Float32BufferAttribute,
+  Group,
   MeshStandardMaterial,
   Skeleton,
   SkinnedMesh,
@@ -149,7 +151,7 @@ function buildPilgrim(tones: Record<Tone, string>) {
   return { mesh, bones };
 }
 
-interface PilgrimProps {
+export interface PilgrimPose {
   x: number;
   z: number;
   facing: number;
@@ -157,22 +159,27 @@ interface PilgrimProps {
 }
 
 // A man in ihram, stylised with no face (D31, D37), with a ground shadow so white ihram reads on white marble.
-export function Pilgrim({ x, z, facing, stride }: PilgrimProps) {
+// The pose comes from a ref each frame, so walking never re-renders React.
+export function Pilgrim({ pose }: { pose: RefObject<PilgrimPose> }) {
   const p = useScenePalette();
+  const group = useRef<Group>(null);
   const { mesh, bones } = useMemo(
     () => buildPilgrim({ ihram: p.ihram, skin: p.skin, hair: p.hair }),
     [p.ihram, p.skin, p.hair],
   );
-  useLayoutEffect(() => {
+  useFrame(() => {
+    const { x, z, facing, stride } = pose.current;
+    group.current!.position.set(x, 0, z);
+    group.current!.rotation.y = facing;
     bones.get("thighL")!.rotation.x = stride;
     bones.get("thighR")!.rotation.x = -stride;
     bones.get("shinL")!.rotation.x = Math.max(0, stride) * 0.8;
     bones.get("shinR")!.rotation.x = Math.max(0, -stride) * 0.8;
     bones.get("upperArmL")!.rotation.x = -stride * 0.8;
     bones.get("upperArmR")!.rotation.x = stride * 0.8;
-  }, [bones, stride]);
+  });
   return (
-    <group position={[x, 0, z]} rotation-y={facing}>
+    <group ref={group}>
       <primitive object={mesh} />
       <mesh rotation-x={-Math.PI / 2} position-y={0.02}>
         <circleGeometry args={[0.45, 32]} />

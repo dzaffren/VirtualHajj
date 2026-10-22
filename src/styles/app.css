@@ -111,8 +111,13 @@ body {
   margin: var(--vh-space-1) 0 0;
 }
 
-/* The system's primary button, as the colour guideline defines it. */
+/* The system's primary button, as the colour guideline defines it. It also styles a link, such as Start tawaf. */
 .primary-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   justify-self: start;
   margin-top: var(--vh-space-3);
   min-height: var(--vh-target);
