@@ -5,6 +5,7 @@ import {
   lineAngle,
   onCircle,
   rukunIraqiPast,
+  rukunYamaniPast,
 } from "../scene/mataf";
 import {
   hudView,
@@ -216,6 +217,33 @@ const nextLine = (s: TawafState) =>
     s,
     lineAngle + 0.05 + lap * Math.ceil((s.angle - lineAngle) / lap) - s.angle,
   );
+
+describe("tawafRules, the Rukun Yamani doa", () => {
+  it("shows the doa from the Rukun Yamani to the line, in each round", () => {
+    for (let n = 0; n <= 6; n++) {
+      let s = laps(toLine(begin(true)), n);
+      s = walk(s, rukunYamaniPast - 0.1);
+      expect(hudView(s)).toEqual({
+        phase: "round",
+        round: n + 1,
+        part: "walk",
+      });
+      s = walk(s, 0.1);
+      expect(hudView(s)).toEqual({ phase: "round", round: n + 1, part: "doa" });
+      if (n === 6) continue;
+      expect(hudView(nextLine(s))).toEqual({
+        phase: "round",
+        round: n + 2,
+        part: "istilam",
+      });
+    }
+  });
+
+  it("shows no doa with hints off", () => {
+    const s = walk(laps(toLine(begin(false)), 1), rukunYamaniPast);
+    expect(hudView(s)).toEqual({ phase: "round", round: 2 });
+  });
+});
 
 describe("tawafRules, mistakes", () => {
   it("voids the round when the pilgrim goes back 4 m clockwise", () => {

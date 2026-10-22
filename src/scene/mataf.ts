@@ -56,6 +56,7 @@ export const rukunIraqi = { x: hajarAswad.x, z: -hajarAswad.z };
 const pastLine = ({ x, z }: { x: number; z: number }) =>
   (Math.atan2(-z, x) - lineAngle + 2 * Math.PI) % (2 * Math.PI);
 export const rukunIraqiPast = pastLine(rukunIraqi);
+export const rukunYamaniPast = pastLine(rukunYamani);
 
 // With hints on, the pilgrim stops for istilam within this many metres of the line, before round 1.
 export const stopBefore = 1;

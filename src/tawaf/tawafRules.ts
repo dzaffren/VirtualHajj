@@ -2,6 +2,7 @@ import {
   insideHijr,
   lineAngle,
   rukunIraqiPast,
+  rukunYamaniPast,
   stopBefore,
 } from "../scene/mataf";
 import type { HudView, Mistake, MistakeKind, RoundPart } from "./hudView";
@@ -121,11 +122,11 @@ export function setHints(s: TawafState, on: boolean): TawafState {
   return on && s.counted >= 7 ? pressDone(next) : next;
 }
 
-// With hints on: the istilam reminder after every round start but the first, until the Rukun Iraqi.
+// With hints on: the istilam reminder after every round start but the first, until the Rukun Iraqi, and the doa from the Rukun Yamani to the line (D46).
 function part(s: TawafState): RoundPart {
   const past = s.angle - lineAngle - turn * s.start;
   if (past < rukunIraqiPast && s.start !== s.firstStart) return "istilam";
-  return "walk";
+  return past > rukunYamaniPast ? "doa" : "walk";
 }
 
 export function hudView(
