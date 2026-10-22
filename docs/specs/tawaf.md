@@ -1,6 +1,6 @@
 # tawaf
 
-**Version:** v1 · **Status:** Refined · **Type:** Feature · **Project type:** Web UI
+**Version:** v1 · **Status:** Built · **Type:** Feature · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** walking-skeleton
@@ -455,7 +455,7 @@ No server data. Two `localStorage` keys on the site's origin, shared by `/` and 
 | 5. No 3D view | `e2e/tawaf.spec.ts` › "says when the view stops on /tawaf": Reload starts a new tawaf before the line. In the `no-webgl` project, with the locale `ms-MY`: › "says when there is no WebGL 2 on /tawaf, in Malay", and the same with the bundle blocked | `pnpm e2e` |
 | D22 | `e2e/perf.spec.ts` › "draws the full load" still reads at least 200,000 triangles in 100 draw calls. You run `/perf` on the Galaxy A35 for 5 minutes, and the screenshot goes into the PR | `pnpm e2e`, by hand |
 
-**E2E:** `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" walks the slice. It opens `/`, presses Start tawaf, walks to the line and seven laps, reads "Round n of 7" after each, and ends on "Tawaf done. Seven rounds." and "No mistakes on the way."
+**E2E:** `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" walks the slice. It opens `/`, presses Start tawaf, and checks that the URL is `/tawaf/`. Then it opens `/tawaf/?e2e=1`, because the link has no hook (O33). It walks to the line and seven laps, reads "Round n of 7" after each, and ends on "Tawaf done. Seven rounds." and "No mistakes on the way."
 
 The walking tests set a 120 s timeout. Locally, `pnpm e2e` fails on this machine, because its headless Chromium drops every WebGL context (walking-skeleton O12). CI is where the e2e tests must pass (O26).
 
@@ -519,6 +519,10 @@ Recorded as D31, D32, D33, D34, D35, D36, D37, D38, D39, D40, D41, D42, D43, D44
 | O29 | How does the e2e test steer the pilgrim for seven rounds? | question | spec p3 | user | Resolved | A `?e2e=1` hook: `window.vh.walkTo(x, z)`, 10 times faster. D43. 2026-10-22 |
 | O30 | Which browser setting counts as "set to Malay"? | question | spec p3 | user | Resolved | The first language only. D34. 2026-10-22 |
 | O31 | How do the arrow keys walk the pilgrim? | question | spec p3 | user | Resolved | Up walks forward, Down walks back, Left and Right turn. D44. 2026-10-22 |
+| O32 | Chunks step 1 says: push the page, the hook and the seven-round test first, so the CI run answers O26. | flag | build | user | Decided alone | Chose: build all five steps before any push, because a push needs your go-ahead. The walking e2e tests ran in headless Firefox on this machine, where Chromium drops WebGL; all 13 pass there, and the 4 no-WebGL tests pass in Chromium. O26 stays an accepted risk until CI passes in Chromium. Other: push after step 1. Undo: push the branch now. 2026-10-22 |
+| O33 | The E2E line said the test opens `/`, presses Start tawaf, and walks. The Start tawaf link goes to `/tawaf/` with no `?e2e=1`, so the walking hook is not there. | flag | build | user | Decided alone | Chose: press Start tawaf, check the URL is `/tawaf/`, then open `/tawaf/?e2e=1` and walk. Other: the link carries the page's query string to `/tawaf/`. Undo: make the link `"/tawaf/" + location.search` in `src/viewer/App.tsx`, and drop the second `goto` in `e2e/tawaf.spec.ts`. 2026-10-22 |
+| O34 | Interface › Screens and copy has no Malay for the viewer's 3D view label, which a screen reader reads. | flag | build | user | Decided alone | Chose: add `viewerLabel` to `src/copy.ts`, with "Paparan 3D Kaabah. Seret, atau guna kekunci anak panah, untuk memusingkannya." Nobody has checked this Malay (as O23). Other: keep the label in English. Undo: change `ms.viewerLabel` in `src/copy.ts`. 2026-10-22 |
+| O35 | The edge arrow says "Turn to the Hajar Aswad line". The spec sets no turn. Facing the line point straight on faces the Kaabah from the far side, and the turned camera (D40) then shows the same view as before. | flag | build | user | Decided alone | Chose: the arrow turns the pilgrim anticlockwise along its circle, with the Kaabah on the left. The arrow hides while the camera sees any of five points along the line, even when the Kaabah hides them. Other: face the line point. Undo: in `turnToLine` in `src/tawaf/App.tsx`, face `onLine(x, z)`. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
