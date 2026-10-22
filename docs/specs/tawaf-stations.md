@@ -1,6 +1,6 @@
 # tawaf-stations
 
-**Version:** v1 · **Status:** Draft · **Type:** Feature · **Project type:** Web UI
+**Version:** v1 · **Status:** Refined · **Type:** Feature · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** tawaf
@@ -250,7 +250,7 @@ The Arabic names sit beside the titles in Readex Pro. The doa use Amiri with har
 | Maqam Ibrahim       | 10.5 m out from the door face, in front of the door: an eight-sided marble base 1.8 m across and 0.4 m high, a gold cage 1.3 m high, a dome and a small spire. Stylised and built in code (D31). It takes taps, as the Kaabah does |
 | The spot behind it  | 3 m further out, on the line from the Kaabah through the Maqam. An `accent` disc 2 m across at 55%, with an `accent-ink` edge, as the line glows. It glows only after the rounds, with hints on. With hints off, nothing marks it  |
 | Istilam             | The pilgrim stops 0.6 m before the line and faces the Hajar Aswad corner. Show me how raises its right hand forward, a little above the shoulder                                                                                   |
-| Camera at a station | The camera turns towards the Kaabah only as far as the Kaabah is. A pilgrim who faces the Kaabah at a station gets a camera straight behind it. On the walk, it still turns 35° or 62° (D40)                                       |
+| Camera at a station | The camera turns towards the Kaabah only as far as the Kaabah is. A pilgrim who faces the Kaabah at a station gets a camera straight behind it. On the walk, it still turns 35° or 62° (D50)                                       |
 
 New scene palette entries, outside the UI system (D25):
 
@@ -285,9 +285,159 @@ New scene palette entries, outside the UI system (D25):
 
 **Checks:** the drift check passed over 11 files. It found no token file named `tokens*.css`, so each of the 22 `--vh-` names in the new code was checked by hand against `docs/design/design-system/tokens/`; all exist. The states were checked in headless Firefox on this machine, where WebGL draws: phone in English and Malay, light and dark, and laptop. The generic-model test passes: the sheet is the system's Station board, and the spot glows in the line's own way. The reference test passes against AC Discovery Tour: the pilgrim stops, the sheet teaches, and Start round 1 walks on. One miss: on a phone, the doa card covers the Kaabah for a quarter round (O15).
 
+## Technical plan
+
+### Approach
+
+The stations live in the pure rules module, as the rounds do. `tawafRules.move` also tracks the stop for istilam before round 1, the part of each round, the end of the rounds, and arrival behind the Maqam Ibrahim. A station pauses the `Walker`, as the menu does, and the `Walker` puts the pilgrim in its station pose. `App` adds four handlers: Start round 1, Show me how, Finish tawaf and the turn to the spot. `walk.ts` keeps the pilgrim out of the Maqam's base, and `/perf` draws the Maqam (D42).
+
+Relies on: D1, D15, D16, D22, D25, D26, D31, D32, D33, D34, D35, D38, D41, D42, D43, D44, D45, D46, D47, D48, D49, D50
+
+```mermaid
+flowchart LR
+    A["tawaf/App"] -->|"startRound, finish, demo"| R["tawaf/tawafRules"]
+    W["tawaf/Walker, each frame"] -->|"pose, target, keys"| K["scene/walk.step"]
+    K -->|"collides with the Kaabah, Hijr wall, Maqam"| M["scene/mataf"]
+    W -->|"new x, z"| R
+    R -->|"station entered"| W
+    W -->|"raise, from showMe.raiseAt"| P["scene/Pilgrim"]
+    R -->|"hudView, when it changes"| A
+    A -->|"view, handlers"| H["tawaf/TawafHud"]
+    H -->|"sheet, doa block, toast"| U["ui/StationSheet, DoaBlock, Toast"]
+    A -->|"spot glows"| S["scene/TawafScene"]
+```
+
+The `Walker` moves the pilgrim and feeds each spot to `tawafRules`. When the rules enter a station, the `Walker` stops the pilgrim, and the HUD shows the sheet. `App` sends the learner's presses back to the rules.
+
+```mermaid
+sequenceDiagram
+    participant L as Learner
+    participant W as Walker (useFrame)
+    participant R as tawafRules
+    participant A as tawaf/App
+    participant H as TawafHud
+    L->>W: tap past the Hajar Aswad line
+    loop every frame
+        W->>R: move(state, x, z)
+        R-->>W: istilam "sheet": within 1 m of the line, or past it
+    end
+    W->>W: istilamPose, drop the target, pause
+    W->>A: hudView = istilam
+    A->>H: StationSheet, focus on Start round 1
+    L->>H: Show me how
+    H->>A: onShowMe
+    A->>W: demo: raise 0 to 1 to 0 over 1.96 s
+    W->>A: onShown
+    L->>H: Start round 1
+    H->>A: onStartRound
+    A->>R: startRound(state)
+    A->>W: face along the tawaf, walk on
+    W->>R: the next crossing starts round 1
+```
+
+The pilgrim stops at the line, the sheet takes focus, and Show me how plays the hand. Start round 1 lets the walk go on, and the next crossing starts round 1.
+
+No new data crosses a trust boundary. The two `localStorage` keys and the `?e2e=1` hook stay as `tawaf` left them.
+
+### Rules, as code
+
+`TawafState` gains these fields. Each one is set by a pure function, and `tawafRules.test.ts` tests each one.
+
+| Field         | Values                                | Set by                                                                                                                                                                                                                                                                        |
+| ------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `istilam`     | `"due"`, `"sheet"`, `"done"`          | `move` sets `"sheet"`: hints on, before round 1, on an anticlockwise approach within 1 m of the line along the pilgrim's circle, or on a crossing. That crossing does not start round 1. `startRound` sets `"done"`. `setHints(s, false)` sets `"done"` while the sheet shows |
+| `firstStart`  | the crossing index of round 1's start | `move`, when round 1 starts. The istilam reminder shows after every later round start, and never after this one                                                                                                                                                               |
+| `afterRounds` | `true` once the rounds end            | `move`, when 7 count with hints on. `pressDone` with 7 or more counted: it also lists "over" for more than 7, as now                                                                                                                                                          |
+| `rakaat`      | `true` while the rakaat sheet shows   | `move`, within 3 m of `maqamSpot` once `afterRounds`. With hints off and 7 or more counted, arrival calls `pressDone` first. Under 7, nothing                                                                                                                                 |
+| `prayed`      | `true` or `false` on the done view    | `finish(s)`: `done: true`, `prayed: s.rakaat`                                                                                                                                                                                                                                 |
+
+- After the rounds, `move` stops the direction and Hijr Ismail checks. A crossing of the line counts nothing more.
+- `hudView(s, offScreen)` gives `before-line` with `lineOffScreen`, `istilam` with `demo`, and `round` with its `part`. It also gives `to-maqam` with `spotOffScreen` and `over`, then `rakaat`, then `done` with `prayed`.
+- The part is set by the offset past the line, `(angle − lineAngle) mod 2π`. The part is `istilam` below the Rukun Iraqi's offset, for any round start but the first. It is `doa` above the Rukun Yamani's offset. Otherwise it is `walk`.
+- `setHints(s, true)` with 7 or more counted ends the rounds through `pressDone`, as now. The menu stays open, because no sheet takes its place. The `tawaf` fix `cf3f62a` closed the menu only to make room for the done sheet.
+
+### Changes
+
+| File                                                  | What changes                                                                                                                                                                                                                                                                                                                                                                              | Why                                       |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `src/tawaf/tawafRules.ts` + `.test.ts`                | The fields and rules in **Rules, as code**. New `startRound(s)` and `finish(s)`. `pressDone` and `setHints` end the rounds instead of the tawaf                                                                                                                                                                                                                                           | Rules, scenarios 1–4                      |
+| `src/scene/mataf.ts`                                  | `rukunIraqi`, and the Rukun Iraqi and Rukun Yamani offsets past the line. `stopBefore = 1`. `istilamPose(x, z)`: the pilgrim's spot, or 0.6 m before the line if one frame carried it past, facing the Hajar Aswad corner. `inSpot(x, z)`                                                                                                                                                 | Scenarios 1, 3, 4                         |
+| `src/scene/walk.ts` + `.test.ts`                      | `collide` (`walk.ts:38`) pushes the pilgrim out of the Maqam's base, 0.9 m plus the 0.4 m body, so it slides round it                                                                                                                                                                                                                                                                     | The pilgrim never walks through the Maqam |
+| `src/tawaf/showMe.ts` + `.test.ts` (new)              | `raiseAt(t, reduced)`: 0 to 1 over 0.48 s on the settle curve, 1 for 1 s, then 1 to 0 over 0.48 s. With reduced motion, 1 for 1.5 s, then 0. `showMeLength(reduced)`                                                                                                                                                                                                                      | Scenario 5                                |
+| `src/tawaf/Walker.tsx`                                | A station pauses it, as the menu does (`Walker.tsx:92`). On entering a station, it sets the pose: `istilamPose` at the line, or facing the Maqam at the spot, and drops the target. During a demo it sets `pose.raise` from `raiseAt`, and calls `onShown` at the end. `lineSide` (`Walker.tsx:72`) becomes one camera test for the line before round 1 and for the spot after the rounds | Scenarios 1, 3, 5                         |
+| `src/tawaf/App.tsx`                                   | `paused` (`App.tsx:80`) also covers a station sheet. `onStartRound` calls `startRound` and turns the pilgrim along the tawaf. `onShowMe` sets the demo until `onShown`. `onFinish` calls `finish`. `onTurnToSpot` faces `maqamSpot`, as `turnToLine` (`App.tsx:131`) faces the line. It passes `spot` to `TawafScene`. `onHints` no longer closes the menu                                | Scenarios 1, 3, 4, 5                      |
+| `src/tawaf/TawafHud.tsx`                              | The four handlers become required. After a demo, Show me how carries `data-autofocus`                                                                                                                                                                                                                                                                                                     | Floors: focus goes back to Show me how    |
+| `src/ui/StationSheet.tsx`                             | Focus goes to the button with `data-autofocus`, else the first button                                                                                                                                                                                                                                                                                                                     | Floors                                    |
+| `src/perf/App.tsx:143`                                | Adds `<MaqamIbrahim />`, and names it in the scene's label                                                                                                                                                                                                                                                                                                                                | D22, D42                                  |
+| `e2e/tawaf.ts`                                        | `walkToLine` reads the hints switch. With hints on, it presses Start round 1 on the sheet, then walks past the line. New `walkToSpot`                                                                                                                                                                                                                                                     | Test plan                                 |
+| `e2e/tawaf.spec.ts`                                   | The tests in **Test plan**. Tests that ended on the done sheet now walk to the spot and press Finish tawaf first                                                                                                                                                                                                                                                                          | Scenarios 1–5                             |
+| `DECISIONS.md`                                        | D45 to D50, and D40's Status set to `superseded by D50`                                                                                                                                                                                                                                                                                                                                   | `/build` step 1                           |
+| `docs/ARCHITECTURE.md`, `OVERVIEW.md`, `CHANGELOG.md` | The stations, the slice row, the entry                                                                                                                                                                                                                                                                                                                                                    | `/ship`                                   |
+
+Reusing: `useLeaving`, `Sheet`, `PrimaryButton`, `QuietButton`, `ProgressMarks`, `onCircle`, `facingAnticlockwise`, `onLine`, the `?e2e=1` hook, `walkArc` and `openTawaf` in `e2e/tawaf.ts`, and every pause 2 file in `src/ui/`, `src/tawaf/`, `src/scene/` and `src/copy.ts`.
+
+No new dependency.
+
+### Earn-it
+
+| Added                              | Triggered by                                                                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `src/tawaf/showMe.ts`              | Scenario 5: the hand rises, holds and falls, and cuts with reduced motion. The curve is tested without a browser |
+| The Maqam in `collide`             | Scenario 3: the pilgrim walks round it. The e2e laps at 16 m cross its place                                     |
+| The station pose in the `Walker`   | Scenario 1: the pilgrim stops facing the Hajar Aswad, even when one frame carries it past the line               |
+| `data-autofocus` on `StationSheet` | The keyboard floor: focus goes back to Show me how after the demo                                                |
+| D50's camera turn                  | Scenarios 1 and 3: at a station, the camera shows the Kaabah, not the floor                                      |
+
+### Non-functionals
+
+|                      |                                                                                                                                                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Load**             | A few visitors a day, from static files on Cloudflare's CDN. The Maqam and the spot add about 460 triangles and 6 draw calls. Amiri, 109 kB, loads with the first doa, once a visit.                              |
+| **Breaks first**     | The phone's graphics chip, as in `tawaf`. The Maqam is 0.2% of the 200,000 triangles that `/perf` draws, and `/perf` draws it too (D42).                                                                          |
+| **Security surface** | No new input. Taps, keys, the two `localStorage` values and `?e2e=1` stay as `tawaf` left them. No new secrets, cookies or outside requests: the Amiri request was already in `fonts.css`.                        |
+| **Proof it works**   | The `ci` run on `main` passes `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" against https://virtualhajj.pages.dev after the production deploy. It now ends with Finish tawaf behind the Maqam Ibrahim. |
+| **Rollout**          | No flag: the stations are part of `/tawaf`. Roll back with Cloudflare Pages › virtualhajj › Deployments › Rollback, or `git revert` and merge.                                                                    |
+
+### Test plan
+
+| Scenario               | Test                                                                                                                                                                                                                                                                                                                                                                                                                        | Command                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1. Istilam at the line | `tawafRules.test.ts`: the sheet on an approach within 1 m, and on a one-frame crossing; no sheet on a clockwise approach or with hints off; round 1 starts at the next crossing after `startRound`; the reminder after each later round start, until the Rukun Iraqi; no reminder in round 1; hints off closes the sheet. `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" and › "starts in Malay on a Malay phone" | `pnpm test`, `pnpm e2e` |
+| 2. The doa             | `tawafRules.test.ts`: the `doa` part from the Rukun Yamani to the line, in each round. `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" reads the doa and its meaning in round 2                                                                                                                                                                                                                                    | `pnpm test`, `pnpm e2e` |
+| 3. Two rakaat          | `tawafRules.test.ts`: seven rounds lead to `to-maqam`; no direction check after them; the spot raises the sheet; `finish` gives `prayed: true`. `walk.test.ts`: the pilgrim walks round the Maqam, never through it. `e2e/tawaf.spec.ts` › "walks seven rounds with hints on"                                                                                                                                               | `pnpm test`, `pnpm e2e` |
+| 4. Hints off           | `tawafRules.test.ts`: one test for each Examples row. `e2e/tawaf.spec.ts` › "counts with hints off" ends with the toast, Finish tawaf and the done sheet's note. New › "with hints off, the spot behind the Maqam acts as Done at seven"                                                                                                                                                                                    | `pnpm test`, `pnpm e2e` |
+| 5. Show me how         | `showMe.test.ts`: the curve and its reduced form. New `e2e/tawaf.spec.ts` › "Show me how lowers the sheet and brings it back": the sheet leaves and returns, and focus is on Show me how                                                                                                                                                                                                                                    | `pnpm test`, `pnpm e2e` |
+| D22                    | `e2e/perf.spec.ts` › "draws the full load" still reads at least 200,000 triangles in 100 draw calls. The A35 run is skipped (O19)                                                                                                                                                                                                                                                                                           | `pnpm e2e`              |
+
+**E2E:** `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" walks the slice. It opens `/`, presses Start tawaf, then opens `/tawaf/?e2e=1` (tawaf O33). It walks to the line, reads the istilam sheet and presses Start round 1. Then it walks seven laps, and reads the reminder and the doa in round 2. Last, it walks to the spot, reads the rakaat sheet, presses Finish tawaf, and ends on "Tawaf done. Seven rounds." and "No mistakes on the way."
+
+Locally, run the walking tests in headless Firefox, because Chromium on this machine drops every WebGL context. CI judges the Chromium run.
+
+### Chunks
+
+Single chunk. The rules, the `Walker`, `App` and the e2e helpers all change for the same stations, and `copy.ts` and `hudView.ts` are shared. `/build` works in this order:
+
+1. `DECISIONS.md`: D45 to D50, and D40's Status.
+2. `tawafRules`, `mataf` and `showMe`, with their tests.
+3. The Maqam in `collide`, with its test.
+4. The `Walker`, `App`, `TawafHud` and `StationSheet` wiring.
+5. `e2e/tawaf.ts` and `e2e/tawaf.spec.ts`.
+6. `/perf` draws the Maqam.
+
+### Risks
+
+| Risk                                                                                                | Mitigation                                                                                                                                                                           |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| An e2e test that walks past the line with hints on now stops at the sheet, and times out            | `walkToLine` reads the hints switch and presses Start round 1. Every test that ends on the done sheet walks to the spot first                                                        |
+| The e2e laps at 16 m run into the Maqam, whose base reaches 1.3 m round its centre                  | `collide` slides the pilgrim round it. The lap chord passes 0.55 m from its centre, so the slide is short. `walk.test.ts` checks that a chord through its place ends on the far side |
+| One frame carries the pilgrim past the line before the sheet rises: at the hook's pace, up to 3.4 m | The crossing raises the sheet too, and `istilamPose` puts the pilgrim back 0.6 m before the line. `tawafRules.test.ts` tests the one-frame crossing                                  |
+| The count of seven istilam has no source (O2)                                                       | It is the user's call. Istilam is sunnah, so seven or eight teaches nothing that voids a tawaf                                                                                       |
+| Nobody checks the Arabic but the user (shape O2)                                                    | O10: you checked it against the Tabung Haji book at pause 2                                                                                                                          |
+| The A35 run is skipped (O19)                                                                        | The Maqam adds 0.2% to the `/perf` load. Run `/perf` on production for 5 minutes to check, as tawaf O37 says                                                                         |
+
 ## Decisions to record
 
-Drafted at pause 1. `/build` appends them to `DECISIONS.md` exactly as below.
+Drafted at pauses 1 to 3. `/build` appends them to `DECISIONS.md` exactly as below, and sets D40's Status to `superseded by D50`.
 
 ```markdown
 ## D45 · 2026-10-22 · Istilam: a station sheet before round 1, then a reminder at the start of each later round
@@ -324,29 +474,39 @@ Why: words describe a gesture badly, so the pilgrim raises its right hand to the
 Rejected: a Show me button in the walking HUD (it repeats the glow and the edge arrow), no demo (words alone describe a gesture badly), a demo of the two rakaat (a prayer animation is a lot of figure work, and learners already know how to pray).
 Source: docs/specs/tawaf-stations.md
 Status: active
+
+## D50 · 2026-10-22 · The tawaf camera turns towards the Kaabah, and no further
+
+Why: a portrait phone sees about 24° across, so a camera straight behind a walking figure never shows the Kaabah, and the rule is "keep the Kaabah on your left". The camera stays behind and above the figure. It turns up to 35° towards the Kaabah on a landscape screen, and up to 62° and further back on a portrait one. Walking the wrong way, it turns right, and the Kaabah shows on that side. It turns no further than the Kaabah is, so at a station, where the pilgrim faces the Kaabah, it stands straight behind.
+Rejected: a camera straight behind the figure on the walk (the Kaabah is off screen on a phone), a fixed 35° or 62° turn (at a station, the camera looks past the Kaabah at the floor).
+Supersedes: D40
+Source: docs/specs/tawaf-stations.md
+Status: active
 ```
 
 ## Open items
 
-| ID  | What                                                                                                                                                                                 | Type     | Raised at | Owner | Status   | Answer                                                                                                                                                                                                                                                                                    |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | --------- | ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| O1  | How often does the istilam sheet rise at the Hajar Aswad line?                                                                                                                       | question | spec p1   | user  | Resolved | Once, before round 1. At each later crossing, the top card reminds the learner, and the walk goes on. D45. 2026-10-22                                                                                                                                                                     |
-| O2  | Is there one more istilam when round 7 ends, so eight in all?                                                                                                                        | question | spec p1   | user  | Resolved | Yes, eight. Claude was not sure of the count, so the check against the Tabung Haji book is part of O10. D45. 2026-10-22. Changed at pause 2: seven, one at the start of each round. A web search found no source for either count. D45. 2026-10-22                                        |
-| O3  | How does the doa between the Rukun Yamani and the Hajar Aswad show?                                                                                                                  | question | spec p1   | user  | Resolved | In the top card, in each round, while the pilgrim walks. No stop. D46. 2026-10-22                                                                                                                                                                                                         |
-| O4  | Tabung Haji books give a doa for each round. Is that in this slice?                                                                                                                  | question | spec p1   | user  | Resolved | No. Only the Rukun Yamani doa. D46. 2026-10-22                                                                                                                                                                                                                                            |
-| O5  | With hints on, what happens when round 7 counts?                                                                                                                                     | question | spec p1   | user  | Resolved | The top card says to walk behind the Maqam Ibrahim, and a spot glows. There the pilgrim stops, the rakaat sheet rises, and its button opens the done card. D47. 2026-10-22                                                                                                                |
-| O6  | Where does the app count the pilgrim as behind the Maqam Ibrahim?                                                                                                                    | question | spec p1   | user  | Resolved | Within 3 m of a spot 3 m behind the Maqam, on the line from the Kaabah through it. With hints on, the spot glows. D47. 2026-10-22                                                                                                                                                         |
-| O7  | With hints off, do the istilam sheet and the doa still show?                                                                                                                         | question | spec p1   | user  | Resolved | No. Nothing checks them, because both are sunnah. D45, D46. 2026-10-22                                                                                                                                                                                                                    |
-| O8  | With hints off, how do the two rakaat work after Done at 7?                                                                                                                          | question | spec p1   | user  | Resolved | Done at 7 says "Seven rounds count." The learner walks behind the Maqam alone, and the sheet rises there. Finish ends without the rakaat, and the done card notes them. D48. 2026-10-22                                                                                                   |
-| O9  | What do Show me how and the walking HUD's Show me do?                                                                                                                                | question | spec p1   | user  | Resolved | Show me how on the istilam sheet only: the pilgrim raises its right hand to the Hajar Aswad. The walking HUD's Show me is dropped. This closes tawaf O20. D49. 2026-10-22                                                                                                                 |
-| O10 | Who writes the Arabic, its reading, and its meaning in English and Malay?                                                                                                            | question | spec p1   | user  | Resolved | Claude drafts them, with the Malay copy. You check them against the Tabung Haji book in the pause 2 preview, as in tawaf O23. Approval of pause 2 means they stand. 2026-10-22. Checked at pause 2: they match the book. 2026-10-22                                                       |
-| O11 | At the Rukun Yamani, does the app also teach touching the corner?                                                                                                                    | question | spec p1   | user  | Resolved | No, the doa only. D46. 2026-10-22                                                                                                                                                                                                                                                         |
-| O12 | What does the rakaat sheet teach?                                                                                                                                                    | question | spec p1   | user  | Resolved | Two rakaat that face the Kaabah, with the Maqam in front. After al-Fatihah, al-Kafirun in the first and al-Ikhlas in the second. No niat. D47. 2026-10-22                                                                                                                                 |
-| O13 | With hints off, the pilgrim reaches the spot behind the Maqam with no Done. What happens?                                                                                            | question | spec p1   | user  | Resolved | Arrival acts as Done at 7 or more: the sheet rises, and over 7 is listed. Under 7, nothing happens, because learners walk across the spot in the rounds. D48. 2026-10-22                                                                                                                  |
-| O14 | Which motion tier?                                                                                                                                                                   | question | spec p2   | user  | Resolved | Tier 2, as tawaf. Interface sets it. 2026-10-22                                                                                                                                                                                                                                           |
-| O15 | On a phone, the doa card reaches about two thirds down the screen and hides the Kaabah for a quarter round. Keep it?                                                                 | question | spec p2   | user  | Resolved | Keep it. The pilgrim and the line ahead stay clear below it. 2026-10-22                                                                                                                                                                                                                   |
-| O16 | The rakaat sheet adds a line that pause 1 did not ask for: you may pray anywhere in the Masjidil Haram when the crowd is too dense. Keep it?                                         | question | spec p2   | user  | Resolved | Keep it. Behind the Maqam is best, and anywhere in the mosque is valid in the Shafi'i rulings. 2026-10-22                                                                                                                                                                                 |
-| O17 | Shafi'i books say a pilgrim who can't touch the Hajar Aswad points at it, then kisses the hand. Does the Tabung Haji book teach the kiss? The sheet now says only to raise the hand. | question | spec p2   | user  | Resolved | Add the kiss. The sheet says to kiss the right hand, and the reminder says to kiss the hand. Shafi\'i sources teach it: al-Bujairimi, quoted by NU Online, and Zakariyya al-Ansari, quoted by Dr Zulkifli Mohamad al-Bakri. Show me how still shows only the raised hand. D45. 2026-10-22 |
+| ID  | What                                                                                                                                                                                 | Type     | Raised at | Owner | Status        | Answer                                                                                                                                                                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | --------- | ----- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| O1  | How often does the istilam sheet rise at the Hajar Aswad line?                                                                                                                       | question | spec p1   | user  | Resolved      | Once, before round 1. At each later crossing, the top card reminds the learner, and the walk goes on. D45. 2026-10-22                                                                                                                                                                     |
+| O2  | Is there one more istilam when round 7 ends, so eight in all?                                                                                                                        | question | spec p1   | user  | Resolved      | Yes, eight. Claude was not sure of the count, so the check against the Tabung Haji book is part of O10. D45. 2026-10-22. Changed at pause 2: seven, one at the start of each round. A web search found no source for either count. D45. 2026-10-22                                        |
+| O3  | How does the doa between the Rukun Yamani and the Hajar Aswad show?                                                                                                                  | question | spec p1   | user  | Resolved      | In the top card, in each round, while the pilgrim walks. No stop. D46. 2026-10-22                                                                                                                                                                                                         |
+| O4  | Tabung Haji books give a doa for each round. Is that in this slice?                                                                                                                  | question | spec p1   | user  | Resolved      | No. Only the Rukun Yamani doa. D46. 2026-10-22                                                                                                                                                                                                                                            |
+| O5  | With hints on, what happens when round 7 counts?                                                                                                                                     | question | spec p1   | user  | Resolved      | The top card says to walk behind the Maqam Ibrahim, and a spot glows. There the pilgrim stops, the rakaat sheet rises, and its button opens the done card. D47. 2026-10-22                                                                                                                |
+| O6  | Where does the app count the pilgrim as behind the Maqam Ibrahim?                                                                                                                    | question | spec p1   | user  | Resolved      | Within 3 m of a spot 3 m behind the Maqam, on the line from the Kaabah through it. With hints on, the spot glows. D47. 2026-10-22                                                                                                                                                         |
+| O7  | With hints off, do the istilam sheet and the doa still show?                                                                                                                         | question | spec p1   | user  | Resolved      | No. Nothing checks them, because both are sunnah. D45, D46. 2026-10-22                                                                                                                                                                                                                    |
+| O8  | With hints off, how do the two rakaat work after Done at 7?                                                                                                                          | question | spec p1   | user  | Resolved      | Done at 7 says "Seven rounds count." The learner walks behind the Maqam alone, and the sheet rises there. Finish ends without the rakaat, and the done card notes them. D48. 2026-10-22                                                                                                   |
+| O9  | What do Show me how and the walking HUD's Show me do?                                                                                                                                | question | spec p1   | user  | Resolved      | Show me how on the istilam sheet only: the pilgrim raises its right hand to the Hajar Aswad. The walking HUD's Show me is dropped. This closes tawaf O20. D49. 2026-10-22                                                                                                                 |
+| O10 | Who writes the Arabic, its reading, and its meaning in English and Malay?                                                                                                            | question | spec p1   | user  | Resolved      | Claude drafts them, with the Malay copy. You check them against the Tabung Haji book in the pause 2 preview, as in tawaf O23. Approval of pause 2 means they stand. 2026-10-22. Checked at pause 2: they match the book. 2026-10-22                                                       |
+| O11 | At the Rukun Yamani, does the app also teach touching the corner?                                                                                                                    | question | spec p1   | user  | Resolved      | No, the doa only. D46. 2026-10-22                                                                                                                                                                                                                                                         |
+| O12 | What does the rakaat sheet teach?                                                                                                                                                    | question | spec p1   | user  | Resolved      | Two rakaat that face the Kaabah, with the Maqam in front. After al-Fatihah, al-Kafirun in the first and al-Ikhlas in the second. No niat. D47. 2026-10-22                                                                                                                                 |
+| O13 | With hints off, the pilgrim reaches the spot behind the Maqam with no Done. What happens?                                                                                            | question | spec p1   | user  | Resolved      | Arrival acts as Done at 7 or more: the sheet rises, and over 7 is listed. Under 7, nothing happens, because learners walk across the spot in the rounds. D48. 2026-10-22                                                                                                                  |
+| O14 | Which motion tier?                                                                                                                                                                   | question | spec p2   | user  | Resolved      | Tier 2, as tawaf. Interface sets it. 2026-10-22                                                                                                                                                                                                                                           |
+| O15 | On a phone, the doa card reaches about two thirds down the screen and hides the Kaabah for a quarter round. Keep it?                                                                 | question | spec p2   | user  | Resolved      | Keep it. The pilgrim and the line ahead stay clear below it. 2026-10-22                                                                                                                                                                                                                   |
+| O16 | The rakaat sheet adds a line that pause 1 did not ask for: you may pray anywhere in the Masjidil Haram when the crowd is too dense. Keep it?                                         | question | spec p2   | user  | Resolved      | Keep it. Behind the Maqam is best, and anywhere in the mosque is valid in the Shafi'i rulings. 2026-10-22                                                                                                                                                                                 |
+| O17 | Shafi'i books say a pilgrim who can't touch the Hajar Aswad points at it, then kisses the hand. Does the Tabung Haji book teach the kiss? The sheet now says only to raise the hand. | question | spec p2   | user  | Resolved      | Add the kiss. The sheet says to kiss the right hand, and the reminder says to kiss the hand. Shafi\'i sources teach it: al-Bujairimi, quoted by NU Online, and Zakariyya al-Ansari, quoted by Dr Zulkifli Mohamad al-Bakri. Show me how still shows only the raised hand. D45. 2026-10-22 |
+| O18 | D40 rejected a camera straight behind the figure. The pause 2 camera goes straight behind when the pilgrim faces the Kaabah at a station. Supersede D40?                             | question | spec p3   | user  | Resolved      | Supersede it with D50: the camera turns towards the Kaabah, and no further than the Kaabah is. 2026-10-22                                                                                                                                                                                 |
+| O19 | The Maqam Ibrahim adds about 460 triangles to `/tawaf` and `/perf`. Run `/perf` on the Galaxy A35 for this slice?                                                                    | flag     | spec p3   | user  | Accepted risk | Skip the run. The Maqam is 0.2% of the 200,000 triangles that `/perf` draws, and tawaf O37 already carries the unrun A35 check. The risk: `/tawaf` may hold under 30 FPS on the A35 (D22). To check, run `/perf` on production for 5 minutes. 2026-10-22                                  |
 
 _Never delete this section or its rows. See references/ledger.md._
 
@@ -385,3 +545,8 @@ _Never delete this section or its rows. See references/ledger.md._
 - **Scrim** — the see-through dark layer behind a sheet, so the sheet stands out from the scene.
 - **WebGL** — the browser feature that draws 3D graphics.
 - **Headless** — a browser that runs with no window, for tests and screenshots.
+- **Draw call** — one request from the app to the graphics chip to draw a set of triangles.
+- **Unwrapped angle** — an angle that keeps counting past 360°, so seven laps read as 7 × 360°.
+- **useFrame** — React Three Fiber's hook that runs once per drawn frame.
+- **CDN** — copies of the site kept in many cities, so a phone downloads from one nearby.
+- **Supersede** — replace an old decision with a new entry that says so.
