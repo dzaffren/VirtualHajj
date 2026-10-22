@@ -1,6 +1,6 @@
 # tawaf
 
-**Version:** v1 · **Status:** Built · **Type:** Feature · **Project type:** Web UI
+**Version:** v1 · **Status:** Shipped · **Type:** Feature · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** walking-skeleton
@@ -534,6 +534,7 @@ Recorded as D31, D32, D33, D34, D35, D36, D37, D38, D39, D40, D41, D42, D43, D44
 | O33 | The E2E line said the test opens `/`, presses Start tawaf, and walks. The Start tawaf link goes to `/tawaf/` with no `?e2e=1`, so the walking hook is not there. | flag | build | user | Decided alone | Chose: press Start tawaf, check the URL is `/tawaf/`, then open `/tawaf/?e2e=1` and walk. Other: the link carries the page's query string to `/tawaf/`. Undo: make the link `"/tawaf/" + location.search` in `src/viewer/App.tsx`, and drop the second `goto` in `e2e/tawaf.spec.ts`. 2026-10-22 |
 | O34 | Interface › Screens and copy has no Malay for the viewer's 3D view label, which a screen reader reads. | flag | build | user | Decided alone | Chose: add `viewerLabel` to `src/copy.ts`, with "Paparan 3D Kaabah. Seret, atau guna kekunci anak panah, untuk memusingkannya." Nobody has checked this Malay (as O23). Other: keep the label in English. Undo: change `ms.viewerLabel` in `src/copy.ts`. 2026-10-22 |
 | O35 | The edge arrow says "Turn to the Hajar Aswad line". The spec sets no turn. Facing the line point straight on faces the Kaabah from the far side, and the turned camera (D40) then shows the same view as before. | flag | build | user | Decided alone | Chose: the arrow turns the pilgrim anticlockwise along its circle, with the Kaabah on the left. The arrow hides while the camera sees any of five points along the line, even when the Kaabah hides them. Other: face the line point. Undo: in `turnToLine` in `src/tawaf/App.tsx`, face `onLine(x, z)`. 2026-10-22 |
+| O36 | Six `feat` and `fix` commits get no CHANGELOG line of their own. | flag | ship | user | Decided alone | Chose: no line for `9378d6c`, because the preview page is for development and never deploys. No Fixed lines for `e7324b5`, `4cc5bee`, `cf3f62a`, `4a83436` and `de9f29c`, because they fix tawaf behaviour that has not shipped yet. The Added lines cover it. Other: a line for each commit. Undo: add the lines under `## [Unreleased]` in `CHANGELOG.md`. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
