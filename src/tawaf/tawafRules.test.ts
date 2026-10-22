@@ -149,6 +149,15 @@ describe("tawafRules, mistakes", () => {
 describe("tawafRules, hints off", () => {
   const counted = (n: number) => laps(toLine(begin(false)), n);
 
+  it("names nothing when Done is pressed before the line", () => {
+    const s = pressDone(begin(false));
+    expect(hudView(s)).toEqual({ phase: "before-line", lineOffScreen: null });
+    expect(hudView(pressDone(laps(toLine(s), 7)))).toEqual({
+      phase: "done",
+      mistakes: [],
+    });
+  });
+
   it("does not end the tawaf at seven rounds", () => {
     expect(hudView(counted(7))).toEqual({ phase: "round", round: 8 });
   });

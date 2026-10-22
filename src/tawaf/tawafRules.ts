@@ -68,9 +68,9 @@ export function move(s: TawafState, x: number, z: number): TawafState {
   return { ...next, void: kind, mistakes: [...next.mistakes, mistake] };
 }
 
-// Done counts the rounds already complete. Only seven is right (D33).
+// Done counts the rounds already complete. Only seven is right (D33). Before the line, tawaf has not started, so nothing is named (D32).
 export function pressDone(s: TawafState): TawafState {
-  if (s.done || s.short) return s;
+  if (!s.started || s.done || s.short) return s;
   if (s.counted < 7)
     return {
       ...s,
