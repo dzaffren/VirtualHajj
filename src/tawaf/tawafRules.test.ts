@@ -157,13 +157,6 @@ describe("tawafRules, istilam at the line", () => {
     expect(hudView(s).phase).toBe("before-line");
   });
 
-  it("raises no sheet with hints off, and starts round 1 at the crossing", () => {
-    expect(hudView(walk(begin(false), 0.55))).toEqual({
-      phase: "round",
-      round: 1,
-    });
-  });
-
   it("starts round 1 at the next crossing after Start round 1", () => {
     let s = startRound(before(begin(true), 0.9));
     expect(hudView(s).phase).toBe("before-line");
@@ -247,11 +240,6 @@ describe("tawafRules, the Rukun Yamani doa", () => {
       });
     }
   });
-
-  it("shows no doa with hints off", () => {
-    const s = walk(laps(toLine(begin(false)), 1), rukunYamaniPast);
-    expect(hudView(s)).toEqual({ phase: "round", round: 2 });
-  });
 });
 
 describe("tawafRules, mistakes", () => {
@@ -292,11 +280,14 @@ describe("tawafRules, mistakes", () => {
   });
 });
 
+// From the circle just past the line: 20 cm outside the spot behind the Maqam Ibrahim, then 30 cm on into it.
+const edge = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius + 0.2 };
+const inside = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius - 0.1 };
+const toSpot = (s: TawafState) =>
+  walkStraight(walkStraight(s, edge.x, edge.z), inside.x, inside.z, edge);
+
 describe("tawafRules, two rakaat behind the Maqam Ibrahim", () => {
   const seven = () => laps(toLine(begin(true)), 7);
-  // Outside the spot by 20 cm, on the side away from the Kaabah's door face, then 30 cm on into it.
-  const edge = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius + 0.2 };
-  const inside = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius - 0.1 };
 
   it("gives the spot's side while the camera can't see it", () => {
     expect(hudView(seven(), "left")).toEqual({
@@ -328,9 +319,7 @@ describe("tawafRules, two rakaat behind the Maqam Ibrahim", () => {
   });
 
   it("finishes the tawaf with the rakaat prayed", () => {
-    let s = walkStraight(seven(), edge.x, edge.z);
-    s = walkStraight(s, inside.x, inside.z, edge);
-    expect(hudView(finish(s))).toEqual({
+    expect(hudView(finish(toSpot(seven())))).toEqual({
       phase: "done",
       mistakes: [],
       prayed: true,
@@ -338,8 +327,64 @@ describe("tawafRules, two rakaat behind the Maqam Ibrahim", () => {
   });
 });
 
-describe("tawafRules, hints off", () => {
+describe("tawafRules, the stations with hints off", () => {
   const counted = (n: number) => laps(toLine(begin(false)), n);
+
+  it("raises no sheet at the line, and starts round 1 at the crossing", () => {
+    expect(hudView(walk(begin(false), 0.55))).toEqual({
+      phase: "round",
+      round: 1,
+    });
+  });
+
+  it("shows no doa from the Rukun Yamani to the line", () => {
+    const s = walk(counted(1), rukunYamaniPast);
+    expect(hudView(s)).toEqual({ phase: "round", round: 2 });
+  });
+
+  it("says seven rounds count at Done, and raises the rakaat sheet at the spot", () => {
+    const s = pressDone(counted(7));
+    expect(hudView(s)).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: null,
+    });
+    expect(hudView(toSpot(s))).toEqual({ phase: "rakaat" });
+  });
+
+  it("takes arrival at the spot after seven rounds as Done", () => {
+    const s = toSpot(counted(7));
+    expect(hudView(s)).toEqual({ phase: "rakaat" });
+    expect(s.mistakes).toEqual([]);
+  });
+
+  it("does nothing at the spot in round 3", () => {
+    let s = walk(counted(2), 0.45);
+    s = walkStraight(s, maqamSpot.x, maqamSpot.z);
+    expect(hudView(s)).toEqual({ phase: "round", round: 3 });
+    const on = onCircle(r, s.angle + 0.5);
+    s = walkStraight(s, on.x, on.z, maqamSpot);
+    expect(hudView(s)).toEqual({ phase: "round", round: 3 });
+    expect(s.mistakes).toEqual([]);
+  });
+
+  it("takes arrival after eight rounds as Done, and lists the extra round", () => {
+    const s = toSpot(counted(8));
+    expect(hudView(s)).toEqual({ phase: "rakaat" });
+    expect(hudView(finish(s))).toEqual({
+      phase: "done",
+      mistakes: [{ kind: "over", walked: 8 }],
+      prayed: true,
+    });
+  });
+
+  it("finishes without the rakaat after Done at seven", () => {
+    expect(hudView(finish(pressDone(counted(7))))).toEqual({
+      phase: "done",
+      mistakes: [],
+      prayed: false,
+    });
+  });
 
   it("names nothing when Done is pressed before the line", () => {
     const s = pressDone(begin(false));

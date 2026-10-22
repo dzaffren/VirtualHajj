@@ -69,8 +69,10 @@ export function move(s: TawafState, x: number, z: number): TawafState {
   const k = crossings(angle);
   let next = { ...s, angle };
 
+  // With hints off, arrival behind the Maqam Ibrahim with seven or more counted acts as Done (D48).
+  if (!s.afterRounds && s.counted >= 7 && inSpot(x, z)) next = pressDone(next);
   // After the rounds, nothing counts or trips: the pilgrim may walk to the spot behind the Maqam Ibrahim by any path.
-  if (s.afterRounds) return inSpot(x, z) ? { ...next, rakaat: true } : next;
+  if (next.afterRounds) return inSpot(x, z) ? { ...next, rakaat: true } : next;
 
   // With hints on, an anticlockwise approach within 1 m of the line raises the istilam sheet, and so does a crossing. That crossing starts nothing.
   if (s.hints && s.istilam === "due" && !s.started && d > 0) {
