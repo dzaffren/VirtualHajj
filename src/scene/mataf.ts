@@ -74,3 +74,8 @@ export function istilamPose(x: number, z: number) {
     facing: Math.atan2(hajarAswad.x - at.x, hajarAswad.z - at.z),
   };
 }
+
+// Where the pilgrim stands for the two rakaat: where it entered the spot, facing the Kaabah.
+export function rakaatPose(x: number, z: number) {
+  return { x, z, facing: Math.atan2(-x, -z) };
+}

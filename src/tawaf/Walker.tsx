@@ -6,10 +6,10 @@ import {
   istilamPose,
   lineAngle,
   lineLength,
-  maqam,
   maqamSpot,
   onCircle,
   onLine,
+  rakaatPose,
 } from "../scene/mataf";
 import type { PilgrimPose } from "../scene/Pilgrim";
 import { useMediaQuery } from "../scene/useMediaQuery";
@@ -144,10 +144,8 @@ export function Walker({
     if (!walked.target) settle();
     tawaf.current = move(tawaf.current, x, z);
     if (atStation(tawaf.current)) {
-      // The pilgrim stands for the station: facing the Hajar Aswad at the line, or the Maqam Ibrahim at the spot.
-      const stand = tawaf.current.rakaat
-        ? { x, z, facing: Math.atan2(maqam.x - x, maqam.z - z) }
-        : istilamPose(x, z);
+      // The pilgrim stands for the station: facing the Hajar Aswad at the line, or the Kaabah at the spot.
+      const stand = tawaf.current.rakaat ? rakaatPose(x, z) : istilamPose(x, z);
       pose.current = { ...stand, stride: 0 };
       target.current = null;
       settle();

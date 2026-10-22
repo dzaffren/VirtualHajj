@@ -5,6 +5,7 @@ import {
   lineAngle,
   maqamSpot,
   onCircle,
+  rakaatPose,
   rukunIraqiPast,
   rukunYamaniPast,
 } from "../scene/mataf";
@@ -319,6 +320,19 @@ describe("tawafRules, two rakaat behind the Maqam Ibrahim", () => {
     s = walkStraight(s, inside.x, inside.z, edge);
     expect(hudView(s)).toEqual({ phase: "rakaat" });
     expect(walkStraight(s, maqamSpot.x, maqamSpot.z, inside)).toEqual(s);
+  });
+
+  it("stands the pilgrim facing the Kaabah where it entered the spot", () => {
+    // A walk from the line to the spot's centre enters the 3 m circle here, off the line through the Maqam.
+    const pose = rakaatPose(17.03, 4.76);
+    expect(pose).toMatchObject({ x: 17.03, z: 4.76 });
+    const ahead = {
+      x: pose.x + Math.sin(pose.facing),
+      z: pose.z + Math.cos(pose.facing),
+    };
+    expect(Math.hypot(ahead.x, ahead.z)).toBeCloseTo(
+      Math.hypot(pose.x, pose.z) - 1,
+    );
   });
 
   it("finishes the tawaf with the rakaat prayed", () => {
