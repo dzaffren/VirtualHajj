@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { lineAngle, onCircle } from "../scene/mataf";
+import {
+  hajarAswad,
+  istilamPose,
+  lineAngle,
+  onCircle,
+  rukunIraqiPast,
+} from "../scene/mataf";
 import {
   hudView,
   move,
   pressDone,
   setHints,
   start,
+  startRound,
   type TawafState,
 } from "./tawafRules";
 
@@ -30,7 +37,13 @@ function walk(s: TawafState, by: number, radius = r): TawafState {
   return s;
 }
 
-const toLine = (s: TawafState) => walk(s, lineAngle + 0.05 - s.angle);
+// Just past the line, so round 1 starts. With hints on, the walk stops at the istilam sheet, and Start round 1 goes on.
+const toLine = (s: TawafState) => {
+  s = walk(s, lineAngle + 0.05 - s.angle);
+  if (s.istilam !== "sheet") return s;
+  s = startRound(s);
+  return walk(s, lineAngle + 0.05 - s.angle);
+};
 const laps = (s: TawafState, n: number) => walk(s, n * lap);
 
 describe("tawafRules, seven clean rounds", () => {
@@ -54,13 +67,18 @@ describe("tawafRules, seven clean rounds", () => {
   });
 
   it("starts round 1 at the first anticlockwise crossing", () => {
-    expect(hudView(toLine(begin(true)))).toEqual({ phase: "round", round: 1 });
+    expect(hudView(toLine(begin(true)))).toEqual({
+      phase: "round",
+      round: 1,
+      part: "walk",
+    });
   });
 
   it("counts a clean lap", () => {
     expect(hudView(laps(toLine(begin(true)), 1))).toEqual({
       phase: "round",
       round: 2,
+      part: "istilam",
     });
   });
 
@@ -75,12 +93,105 @@ describe("tawafRules, seven clean rounds", () => {
     let s = walk(laps(toLine(begin(true)), 3), 1);
     s = walk(s, -metres(2));
     s = walk(s, 1);
-    expect(hudView(s)).toEqual({ phase: "round", round: 4 });
+    expect(hudView(s)).toEqual({ phase: "round", round: 4, part: "walk" });
   });
 
   it("does not count a round twice when a step back recrosses the line", () => {
     let s = walk(toLine(begin(true)), -metres(1));
     s = walk(s, metres(2));
+    expect(hudView(s)).toEqual({ phase: "round", round: 1, part: "walk" });
+  });
+});
+
+describe("tawafRules, istilam at the line", () => {
+  // Before the line, a distance along the pilgrim's circle.
+  const before = (s: TawafState, m: number) =>
+    walk(s, lineAngle - metres(m) - s.angle);
+
+  it("raises the sheet within 1 m of the line, and not before", () => {
+    let s = before(begin(true), 1.2);
+    expect(hudView(s).phase).toBe("before-line");
+    s = before(s, 0.9);
+    expect(hudView(s)).toEqual({ phase: "istilam", demo: false });
+    expect(s.started).toBe(false);
+  });
+
+  it("raises the sheet when one frame carries the pilgrim past the line", () => {
+    const s = before(begin(true), 2);
+    const p = onCircle(r, lineAngle + metres(1.4));
+    const next = move(s, p.x, p.z);
+    expect(hudView(next)).toEqual({ phase: "istilam", demo: false });
+    expect(next.started).toBe(false);
+  });
+
+  it("stands the pilgrim 0.6 m before the line, facing the Hajar Aswad", () => {
+    const toCorner = (p: { x: number; z: number }) =>
+      Math.hypot(hajarAswad.x - p.x, hajarAswad.z - p.z);
+    const over = onCircle(r, lineAngle + metres(1.4));
+    const pose = istilamPose(over.x, over.z);
+    expect(Math.atan2(-pose.z, pose.x)).toBeCloseTo(lineAngle - metres(0.6));
+    const ahead = {
+      x: pose.x + Math.sin(pose.facing),
+      z: pose.z + Math.cos(pose.facing),
+    };
+    expect(toCorner(ahead)).toBeCloseTo(toCorner(pose) - 1);
+
+    const short = onCircle(r, lineAngle - metres(0.9));
+    expect(istilamPose(short.x, short.z)).toMatchObject(short);
+  });
+
+  it("holds the walk while the sheet shows", () => {
+    const s = before(begin(true), 0.9);
+    expect(walk(s, 1)).toEqual(s);
+  });
+
+  it("raises no sheet on a clockwise approach", () => {
+    const p = onCircle(r, lineAngle + 0.5);
+    const s = walk(start(p.x, p.z, true), -0.5 + metres(0.5));
+    expect(hudView(s).phase).toBe("before-line");
+  });
+
+  it("raises no sheet with hints off, and starts round 1 at the crossing", () => {
+    expect(hudView(walk(begin(false), 0.55))).toEqual({
+      phase: "round",
+      round: 1,
+    });
+  });
+
+  it("starts round 1 at the next crossing after Start round 1", () => {
+    let s = startRound(before(begin(true), 0.9));
+    expect(hudView(s).phase).toBe("before-line");
+    s = walk(s, lineAngle + 0.05 - s.angle);
+    expect(hudView(s)).toEqual({ phase: "round", round: 1, part: "walk" });
+  });
+
+  it("gives no reminder in round 1", () => {
+    const s = walk(toLine(begin(true)), metres(0.5));
+    expect(hudView(s)).toEqual({ phase: "round", round: 1, part: "walk" });
+  });
+
+  it("reminds of istilam at each later round start, until the Rukun Iraqi", () => {
+    for (let n = 1; n <= 6; n++) {
+      let s = laps(toLine(begin(true)), n);
+      s = walk(s, rukunIraqiPast - 0.1);
+      expect(hudView(s)).toEqual({
+        phase: "round",
+        round: n + 1,
+        part: "istilam",
+      });
+      s = walk(s, 0.1);
+      expect(hudView(s)).toEqual({
+        phase: "round",
+        round: n + 1,
+        part: "walk",
+      });
+    }
+  });
+
+  it("closes the sheet when hints go off, and the walk goes on", () => {
+    let s = setHints(before(begin(true), 0.9), false);
+    expect(hudView(s).phase).toBe("before-line");
+    s = walk(s, lineAngle + 0.05 - s.angle);
     expect(hudView(s)).toEqual({ phase: "round", round: 1 });
   });
 });
@@ -123,7 +234,7 @@ describe("tawafRules, mistakes", () => {
 
   it("starts the round again at the next crossing, and lists the mistake", () => {
     let s = nextLine(walk(round3(), -metres(4)));
-    expect(hudView(s)).toEqual({ phase: "round", round: 3 });
+    expect(hudView(s)).toEqual({ phase: "round", round: 3, part: "istilam" });
     s = laps(s, 5);
     expect(hudView(s)).toEqual({
       phase: "done",
@@ -199,6 +310,7 @@ describe("tawafRules, hints off", () => {
     expect(hudView(setHints(counted(3), true))).toEqual({
       phase: "round",
       round: 4,
+      part: "istilam",
     });
   });
 
