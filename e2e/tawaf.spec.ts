@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   openTawaf,
   past,
@@ -160,5 +160,63 @@ test.describe("on a Malay phone", () => {
     await expect(page.getByText("Sebelum mula")).toBeVisible();
     await walkToLine(page);
     await expect(page.getByText("Pusingan 1 daripada 7")).toBeVisible();
+  });
+});
+
+test("says when the view stops on /tawaf", async ({ page }) => {
+  await openTawaf(page);
+  await walkToLine(page);
+  await expect(page.getByText("Round 1 of 7")).toBeVisible();
+  await page.evaluate(() =>
+    document
+      .querySelector("canvas")
+      ?.getContext("webgl2")
+      ?.getExtension("WEBGL_lose_context")
+      ?.loseContext(),
+  );
+  const app = page.locator(".app");
+  await expect(app).toHaveAttribute("data-state", "stopped");
+  await expect(page.getByText("The 3D view stopped.")).toBeVisible();
+  await expect(
+    page.getByText("Reload the page to start it again."),
+  ).toBeVisible();
+  await Promise.all([
+    page.waitForEvent("load"),
+    page.getByRole("button", { name: "Reload" }).click(),
+  ]);
+  await expect(app).toHaveAttribute("data-state", "ready");
+  await expect(page.getByText("Before you start")).toBeVisible();
+});
+
+test.describe("on a Malay browser with no WebGL 2", () => {
+  test.use({ locale: "ms-MY" });
+
+  const saysSo = async (page: Page) => {
+    await expect(page.locator(".app")).toHaveAttribute(
+      "data-state",
+      "no-webgl",
+    );
+    await expect(
+      page.getByText("Pelayar ini tidak dapat menunjukkan paparan 3D."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Buka pautan ini dalam Chrome atau Safari yang terkini."),
+    ).toBeVisible();
+    await expect(page.getByRole("button")).toHaveCount(0);
+  };
+
+  test("says when there is no WebGL 2 on /tawaf, in Malay", async ({
+    page,
+  }) => {
+    await page.goto("/tawaf/");
+    await saysSo(page);
+  });
+
+  test("says when there is no WebGL 2 on /tawaf, in Malay, before the app runs", async ({
+    page,
+  }) => {
+    await page.route("**/assets/*.js", (route) => route.abort());
+    await page.goto("/tawaf/");
+    await saysSo(page);
   });
 });

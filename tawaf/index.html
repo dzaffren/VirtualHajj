@@ -21,6 +21,7 @@
     </div>
     <script>
       // Before the bundle runs: the learner's language, as src/settings.ts picks it, so a Malay browser never sees English first.
+      // Then a browser that can't run the bundle would keep the Loading card for ever, so say so.
       (function () {
         var stored = null;
         try {
@@ -32,6 +33,28 @@
         var swap = document.querySelectorAll("[data-ms]");
         for (var i = 0; ms && i < swap.length; i++)
           swap[i].textContent = swap[i].getAttribute("data-ms");
+
+        var ok = !!document.createElement("canvas").getContext("webgl2");
+        try {
+          new Function("class A { static {} }");
+        } catch (e) {
+          ok = false;
+        }
+        if (ok) return;
+        var app = document.querySelector(".app");
+        app.setAttribute("data-state", "no-webgl");
+        app.querySelector(".card").innerHTML =
+          '<p class="card-name">Tawaf</p>' +
+          '<p class="card-say" aria-live="polite"><span>' +
+          (ms
+            ? "Pelayar ini tidak dapat menunjukkan paparan 3D."
+            : "This browser can't show the 3D view.") +
+          "</span></p>" +
+          '<p class="card-body">' +
+          (ms
+            ? "Buka pautan ini dalam Chrome atau Safari yang terkini."
+            : "Open this link in an up-to-date Chrome or Safari.") +
+          "</p>";
       })();
     </script>
     <script type="module" src="/src/tawaf/main.tsx"></script>
