@@ -1,6 +1,6 @@
 # tawaf
 
-**Version:** v1 · **Status:** Draft · **Type:** Feature · **Project type:** Web UI
+**Version:** v1 · **Status:** Refined · **Type:** Feature · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** walking-skeleton
@@ -307,9 +307,182 @@ New scene palette entries, outside the UI system (D25):
 
 **Checks:** the drift check passed over 18 files. It found no token file named `tokens*.css`, so every `--vh-` name in the new code was checked by hand against `docs/design/design-system/tokens/`; all exist. The HUD was checked in headless Chromium, in English and Malay, light and dark, on phone and laptop. The 3D scene was checked in Chrome on this machine, where WebGL works; headless Chromium here drops every WebGL context.
 
+## Technical plan
+
+### Approach
+
+A third Vite entry, `tawaf/index.html`, mounts the tawaf page. It draws the pause 2 scene and HUD with the same Canvas setup as `/` and `/perf`. A `Walker` inside the Canvas moves the pilgrim each frame. It steps towards the tap target, or by the held arrow keys, keeps the pilgrim out of the Kaabah and off the Hijr Ismail wall, and feeds each new position to a pure rules module. React state changes only when the HUD's view changes, so the page does not re-render 60 times a second. Language and hints live in `localStorage`, shared by `/` and `/tawaf`. `/perf` swaps its old figure for the pilgrim and adds the tawaf parts, so its A35 run covers `/tawaf` (D22, D42).
+
+Relies on: D1, D4, D15, D16, D17, D18, D19, D20, D21, D22, D25, D26, D27, D31, D32, D33, D34, D35, D36, D37, D38, D39, D40, D41, D42, D43, D44
+
+```mermaid
+flowchart LR
+    VH["index.html → viewer/App"] -->|Start tawaf link| TH["tawaf/index.html → tawaf/App"]
+    VH -->|lang| ST["settings: localStorage"]
+    TH -->|lang, hints| ST
+    TH -->|view, handlers| HUD[tawaf/TawafHud]
+    TH -->|pose ref, hints| TS[scene/TawafScene]
+    TS -->|tap x, z| W["tawaf/Walker, each frame"]
+    W -->|"pose, target, keys, dt"| WK[scene/walk]
+    W -->|new position| R[tawaf/tawafRules]
+    R -->|view, when it changes| TH
+    HUD -->|strings| CP[copy]
+```
+
+The viewer links to the tawaf page. There, a tap goes from the scene to the `Walker`. The `Walker` moves the pilgrim with `walk`, and `tawafRules` turns each position into the view that the HUD draws.
+
+```mermaid
+sequenceDiagram
+    participant L as Learner
+    participant S as TawafScene floor
+    participant W as Walker (useFrame)
+    participant K as walk.step
+    participant R as tawafRules.move
+    participant A as tawaf/App
+    participant H as TawafHud
+    L->>S: taps the floor
+    S->>W: target x, z from the raycast
+    loop every frame
+        W->>K: pose, target, dt (at most 0.1 s)
+        K-->>W: next pose, outside the Kaabah and the wall
+        W->>R: next x, z
+        R-->>W: tawaf state
+    end
+    W->>A: hudView(state), only when it changed
+    A->>H: view, hints, lang
+    H-->>L: "Round 2 of 7", the next mark fills
+```
+
+Each frame the pilgrim steps towards the tap and the rules check the new spot. When the pilgrim crosses the line, the view changes once, and the top card updates.
+
+```mermaid
+flowchart LR
+    NAV["navigator.language"] -->|first language| PL[settings.pickLang]
+    LS[("localStorage: vh.lang, vh.hints")] -->|"'en' or 'ms', 'on' or 'off'; any other value is ignored"| PL
+    PL -->|lang, hints| APP["viewer/App, tawaf/App"]
+    APP -->|on change| LS
+    URL["?e2e=1"] -->|"window.vh: walkTo, position"| W[tawaf/Walker]
+```
+
+Two things come from outside the code: the stored settings and the `?e2e=1` flag. A stored value that is not one of the expected two is ignored. The flag only lets a script move the learner's own pilgrim.
+
+### Rules, as code
+
+`tawafRules.ts` tracks the pilgrim's angle round the Kaabah unwrapped, so a full lap adds 2π. It counts the anticlockwise crossings of the line by index: k = floor((angle − line angle) / 2π).
+
+- **Before the line:** the first upward step in k starts round 1. A clockwise approach to the line starts nothing.
+- **A round:** the round counts when k reaches its start + 1, and the round had no mistake. A back-step under 3 m that recrosses the line does not count twice, because k must pass its start + 1.
+- **Wrong way:** (furthest angle this round − angle) × radius > 3 m.
+- **Hijr Ismail:** `insideHijr(x, z)`: past the Hijr face, and nearer its centre than the wall's inner face.
+- **After a mistake:** the round is void. The next upward step in k starts it again.
+- **Done, hints off:** under 7 counted, the app names it, lists it, and the walk goes on. At exactly 7, the tawaf ends. Over 7, the app lists it, and the tawaf ends.
+- **Hints on:** the tawaf ends once 7 or more count. When hints come on with 8 counted, the done sheet lists the extra round.
+- **The cards:** a mistake card or the not-done-yet card shows until the next crossing.
+
+### Changes
+
+| File | What changes | Why |
+| ---- | ------------ | --- |
+| `vite.config.ts:9` | Add `tawaf/index.html` to `rolldownOptions.input` | D36 |
+| `tawaf/index.html` (new) | The Loading card as plain markup: "Tawaf", "Loading the Kaabah…". A plain script before the bundle, as in `index.html:34`: it picks the language (stored, else the browser's first language), sets `<html lang>`, puts the card text in that language, and shows the no-WebGL 2 message in it | Scenario 5 |
+| `index.html:34` | The same language step in its plain script, so a Malay browser never sees English first | Scenarios 4, 5 |
+| `src/settings.ts` + `.test.ts` (new) | `pickLang(stored, first)`: a stored `en` or `ms` wins, else `ms` when the browser's first language starts with "ms", else `en`. `pickHints(stored)`: `off` means off, anything else means on. `useLang` and `useHints` hooks over the keys `vh.lang` and `vh.hints`. Each read and write runs in try/catch, so a private window works with the defaults | D34, D35, scenarios 3, 4 |
+| `src/scene/FirstFrame.tsx` (new) | `FirstFrame`, moved from `src/viewer/App.tsx:11` so both pages use it | Scenario 5 |
+| `src/tawaf/main.tsx`, `src/tawaf/App.tsx` (new) | Mounts the page. Reuses `viewerState` (`src/viewer/viewerState.ts`) for loading, ready, no WebGL 2 and stopped, and `hasWebGL2`. Holds the tawaf state in a ref and the view in React state. The menu pauses the walk. Walk again and Start tawaf again reset to the start pose. Back to the Kaabah view goes to `/`. Arrow keys listen on the window, except while a sheet is open or a control has focus | Scenarios 1–5 |
+| `src/tawaf/tawafRules.ts` + `.test.ts` (new) | Pure: `start()`, `move(state, x, z)`, `pressDone(state)`, `setHints(state, on)`, `hudView(state)`, as **Rules, as code** says | Rules, scenarios 1–3 |
+| `src/tawaf/Walker.tsx` (new) | Inside the Canvas. Each frame: `walk.step`, then `tawafRules.move`, then the pose ref. Calls `onView` only when `hudView` changes. With `?e2e=1`: `window.vh.walkTo(x, z)` takes the same path as a tap, resolves on arrival, and walks 10 times faster; `window.vh.position()` gives x and z | Scenarios 1–3, D43 |
+| `src/scene/walk.ts` + `.test.ts` (new) | Pure. `step(pose, input, dt)`: towards a target, or Up walks forward, Down walks back, Left and Right turn at 120° a second (D44). 3.4 m/s, so a round just outside the Hijr Ismail takes about 25 s (O17). dt is capped at 0.1 s, so a tab that comes back from the background does not jump. `collide` keeps the pilgrim 0.4 m out of the Kaabah, off the Hijr wall band (the gaps stay open), and within 30 m | The pilgrim never walks through the Kaabah or the wall |
+| `src/scene/mataf.ts` | Add `insideHijr(x, z)` and the walking limits | Rules |
+| `src/scene/TawafScene.tsx` | The floor takes taps (`onPointerDown` → `onTap(x, z)`). The pose comes from a ref, and the camera follows it each frame with damping, and cuts with reduced motion. Export `HijrWall` and `HajarAswadLine` for `/perf` | Scenario 1, D40, D42 |
+| `src/scene/Pilgrim.tsx` | The pose comes from a ref. The legs swing in `useFrame` while the pilgrim moves, at a rate that matches its speed | Scenario 1, D42 |
+| `src/tawaf/TawafHud.tsx`, `src/ui/Sheet.tsx` | Focus moves into a sheet when it opens. Escape closes the menu, and focus goes back to the menu button. Sheets leave with `ease-leave` over `dur-panel` | Floors |
+| `src/viewer/App.tsx:70` | The Ready card's copy from `copy[lang]`. A "Start tawaf" link to `/tawaf/`, styled as the primary button. The language choice | Scenarios 1, 4 |
+| `src/styles/app.css` | `.primary-button` works on a link: inline-flex, no underline. The sheet leave keyframes | Scenario 1 |
+| `src/preview/*` | Pass a fixed pose ref, as `TawafScene` now takes one | Preview keeps working |
+| `src/perf/App.tsx:120`, `src/perf/Figure.tsx` | `/perf` draws `Pilgrim`, walking round the Kaabah as `Figure` did, plus `HijrWall` and `HajarAswadLine` with hints on. `Figure.tsx` is deleted | D22, D42 |
+| `e2e/tawaf.ts` (new) | Helpers: `walkTo`, `walkToLine`, `walkLaps(n)` (12 points a lap, at 16 m) | Test plan |
+| `e2e/tawaf.spec.ts` (new) | The tests in **Test plan** | Scenarios 1–5 |
+| `e2e/viewer.spec.ts` | "opens in Malay on a Malay browser", and Start tawaf leads to `/tawaf/` | Scenarios 1, 4 |
+| `docs/ARCHITECTURE.md`, `OVERVIEW.md`, `CHANGELOG.md` | The tawaf page, the slice row, the entry | `/ship` |
+
+Reusing: `viewerState`, `hasWebGL2`, `canvasConfig`, `BaseScene`, `useMediaQuery`, `useScenePalette`, `TopCard`, `PrimaryButton`, the `/perf` meter as it is, `lowerHalfColours` from `e2e/frame.ts`, and everything pause 2 built in `src/ui/`, `src/tawaf/`, `src/scene/` and `src/copy.ts`.
+
+No new dependency.
+
+### Data
+
+No server data. Two `localStorage` keys on the site's origin, shared by `/` and `/tawaf`:
+
+| Key | Values | Default when missing or unknown |
+| --- | ------ | ------------------------------- |
+| `vh.lang` | `en`, `ms` | The browser's first language: `ms` when it starts with "ms", else `en` |
+| `vh.hints` | `on`, `off` | `on` |
+
+**Reverse:** the walking-skeleton build ignores both keys, so a rollback needs nothing. A learner clears them by clearing the site's data. `settings.test.ts` checks that unknown values fall back to the defaults.
+
+### Earn-it
+
+| Added | Triggered by |
+| ----- | ------------ |
+| A third HTML entry, `tawaf/index.html` | D36: tawaf at `/tawaf`. The viewer never downloads the tawaf code |
+| `tawafRules.ts` as a pure module | Scenarios 1–3: every rule tested without a browser |
+| `walk.ts` as a pure module | Scenario 2 needs the Hijr gaps open and the wall closed; collision is tested without a browser |
+| `Walker` writing a ref, with React state only on a view change | 60 React renders a second would cost the A35 frames (D22) |
+| `settings.ts` | D34, D35; scenarios 3 and 4 need the settings back on the next visit |
+| The `?e2e=1` hook | D43: the e2e test walks seven rounds in seconds |
+| `FirstFrame` moved to `src/scene/` | Both pages need it; a second copy would drift |
+| `Pilgrim`, the Hijr wall and the line in `/perf` | D42: one A35 run covers `/tawaf` |
+| `preview/` kept | States that are slow to reach by walking (no WebGL 2, Done after eight) show in seconds. It is dev-only and never deploys |
+
+### Non-functionals
+
+|                      |                                                                               |
+| -------------------- | ----------------------------------------------------------------------------- |
+| **Load**             | A few visitors a day, from static files on Cloudflare's CDN. `/tawaf` shares the three.js chunk with `/`. The gzipped size of each page's JavaScript is measured at build and recorded in the PR. |
+| **Breaks first**     | Nothing on a server: at 10 times the visitors, the CDN serves the same files. The phone's graphics chip breaks first, as the scenes grow. The `/perf` run with the tawaf parts is the guard (D22, D42). |
+| **Security surface** | Anyone can open both pages. Input: taps, clicks, keys, the two `localStorage` values (checked against a fixed list), and `?e2e=1`, which only lets a script on the page move the learner's own pilgrim. No new secrets, cookies or outside requests. |
+| **Proof it works**   | The `ci` run on `main` passes `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" against https://virtualhajj.pages.dev after the production deploy. The PR carries the Galaxy A35 `/perf` screenshot reading "Pass", with its lowest FPS. |
+| **Rollout**          | No flag: `/tawaf` is a new page, and the viewer's Start tawaf link is the only way in. Roll back with Cloudflare Pages › virtualhajj › Deployments › Rollback, or `git revert` and merge. |
+
+### Test plan
+
+| Scenario | Test | Command |
+| -------- | ---- | ------- |
+| 1. Seven clean rounds | `src/tawaf/tawafRules.test.ts`: nothing counts before the first anticlockwise crossing; a clockwise approach starts nothing; a clean lap counts; seven end the tawaf with no mistakes; a 2 m back-step names nothing and does not count twice. `src/scene/walk.test.ts`: speed, the dt cap, the keys, and collision with the Kaabah, the wall and the edge. `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" › "starts in Malay on a Malay phone" › "a click on the floor walks the pilgrim there" | `pnpm test`, `pnpm e2e` |
+| 2. A mistake voids the round | `tawafRules.test.ts`: 4 m back voids the round, and so does inside the Hijr Ismail; the round starts again at the next crossing; the done list names the round. `walk.test.ts`: the Hijr gaps are open. `e2e/tawaf.spec.ts` › "names the wrong way and the Hijr Ismail" | `pnpm test`, `pnpm e2e` |
+| 3. Hints off | `tawafRules.test.ts`: Done at 6, 7 and 8, and hints on at 3 and at 8. `src/settings.test.ts`: `pickHints`. `e2e/tawaf.spec.ts` › "counts with hints off": hints stay off after a reload; Done after 6 is named; Done after 7 lists it | `pnpm test`, `pnpm e2e` |
+| 4. Language | `settings.test.ts`: `pickLang`, with the first language only. `e2e/tawaf.spec.ts` › "switches to Malay in the middle of a tawaf". `e2e/viewer.spec.ts` › "opens in Malay on a Malay browser" | `pnpm test`, `pnpm e2e` |
+| 5. No 3D view | `e2e/tawaf.spec.ts` › "says when the view stops on /tawaf": Reload starts a new tawaf before the line. In the `no-webgl` project, with the locale `ms-MY`: › "says when there is no WebGL 2 on /tawaf, in Malay", and the same with the bundle blocked | `pnpm e2e` |
+| D22 | `e2e/perf.spec.ts` › "draws the full load" still reads at least 200,000 triangles in 100 draw calls. You run `/perf` on the Galaxy A35 for 5 minutes, and the screenshot goes into the PR | `pnpm e2e`, by hand |
+
+**E2E:** `e2e/tawaf.spec.ts` › "walks seven rounds with hints on" walks the slice. It opens `/`, presses Start tawaf, walks to the line and seven laps, reads "Round n of 7" after each, and ends on "Tawaf done. Seven rounds." and "No mistakes on the way."
+
+The walking tests set a 120 s timeout. Locally, `pnpm e2e` fails on this machine, because its headless Chromium drops every WebGL context (walking-skeleton O12). CI is where the e2e tests must pass (O26).
+
+### Chunks
+
+Single chunk. The page, the rules and the viewer share `settings.ts`, `copy.ts` and the scene, and the first CI push has to answer O26 before the rest is worth building. `/build` works in this order:
+
+1. The tawaf page shell: the entry, `App`, `Walker`, `walk`, `tawafRules` with its tests, the `?e2e=1` hook, and "walks seven rounds with hints on". Push. The CI run answers O26.
+2. Mistakes, hints off and Done, the menu and the done sheet, focus handling, and their e2e tests.
+3. `settings.ts`, the language rule, the viewer's Start tawaf link and language choice, the plain scripts in both HTML files, and their e2e tests.
+4. `/perf` with the pilgrim and the tawaf parts.
+5. You run `/perf` on the Galaxy A35 for 5 minutes, and paste the screenshot into the PR.
+
+### Risks
+
+| Risk | Mitigation |
+| ---- | ---------- |
+| CI draws too slowly to walk seven rounds in time (O26) | Step 1 pushes this first. Movement scales with frame time, and the hook walks 10 times faster. If the test still times out, `/build` stops with a blocker |
+| Tapping on the far side of the Kaabah walks the pilgrim into a wall | `collide` slides it along the wall. `walk.test.ts` checks that a tap behind a corner still ends on the far side, or stops at the corner |
+| The A35 fails `/perf` with the pilgrim | That is the check doing its job. The slice is not done. The first things to cut are the shadow and the transparent glow band |
+| The turned camera feels odd to a learner (D40) | The first course to try tawaf (D5) says so. The camera turn is one constant in `TawafScene.tsx` |
+| A token read for the scene runs before the CSS loads, and the glow has no colour | `app.css` is linked in `<head>`, before the bundle. `useToken` reads at render time, after load |
+| The 3 m rule fires on a learner who turns round to look | 3 m is about four steps (O8). `tawafRules.test.ts` pins 2 m as safe |
+
 ## Decisions to record
 
-Drafted at pauses 1 and 2. `/build` appends them to `DECISIONS.md` exactly as below.
+Drafted at pauses 1 to 3. `/build` appends them to `DECISIONS.md` exactly as below.
 
 ```markdown
 ## D31 · 2026-10-22 · Build the tawaf scene and figure in code
@@ -335,8 +508,8 @@ Status: active
 
 ## D34 · 2026-10-22 · Learner pages open in the browser's language, with a language choice to change it
 
-Why: Tabung Haji courses teach in Malay, and other learners need English (D4). A browser set to Malay opens `/` and `/tawaf` in Malay, and any other language opens them in English. The design system's language choice sits in the menu sheet on `/tawaf` and on the viewer's card on `/`. `/perf` stays in English, because it is a developer page (D26).
-Rejected: Malay first on every visit (an English learner must find the choice each time), a language choice on a start card at every visit (one more tap before every lesson), English only on `/` (a Malay learner's first screen would be English), a compact BM / EN control in the top bar (the system has none, and the top bar is full on a 390px phone).
+Why: Tabung Haji courses teach in Malay, and other learners need English (D4). A browser whose first language is Malay opens `/` and `/tawaf` in Malay, and any other opens them in English. The design system's language choice sits in the menu sheet on `/tawaf` and on the viewer's card on `/`. `/perf` stays in English, because it is a developer page (D26).
+Rejected: Malay first on every visit (an English learner must find the choice each time), a language choice on a start card at every visit (one more tap before every lesson), English only on `/` (a Malay learner's first screen would be English), Malay anywhere in the browser's language list (a browser set to English would open in Malay), a compact BM / EN control in the top bar (the system has none, and the top bar is full on a 390px phone).
 Source: docs/specs/tawaf.md
 Status: active
 
@@ -381,6 +554,34 @@ Why: a portrait phone sees about 24° across, so a camera straight behind the fi
 Rejected: a camera straight behind the figure, as the brief assumed (the Kaabah is off screen on a phone).
 Source: docs/specs/tawaf.md
 Status: active
+## D41 · 2026-10-22 · UI components stay in the app, in src/ui/
+
+Why: tawaf adds seven components: the hints switch, menu button, quiet button, language choice, progress marks, bottom sheet and icons. Keeping them in `src/ui/` leaves the design-system package tokens-only, so `/design-sync` needs no change. They move into the package when a second app, or the Claude Design canvas, needs to mount them.
+Rejected: moving them into the package now (it turns into a component library, and the next `/design-sync` needs a new entry and a preview per component).
+Supersedes: D29
+Source: docs/specs/tawaf.md
+Status: active
+
+## D42 · 2026-10-22 · /perf draws the pilgrim and the tawaf parts
+
+Why: D22 needs every scene to hold 30 FPS on the Galaxy A35. `/perf` swaps its old figure for the pilgrim, and adds the Hijr Ismail wall and the glowing line. `/tawaf` draws less than `/perf` does, so one 5-minute run covers both, and no meter code goes on a learner page.
+Rejected: a meter on `/tawaf` behind `?meter` (meter code on a learner page, and a second 5-minute run for each scene).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D43 · 2026-10-22 · The e2e tests steer the pilgrim through a ?e2e hook
+
+Why: the slice test walks seven rounds. With `?e2e=1`, the page exposes `window.vh.walkTo(x, z)`, which takes the same path as a tap, and walks 10 times faster, so seven rounds take seconds on CI. The hook only moves the learner's own pilgrim.
+Rejected: real arrow keys with the test steering by the pilgrim's position (about 3 minutes a run, and steering at CI's low frame rate is flaky).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D44 · 2026-10-22 · Up walks the pilgrim, Left and Right turn it
+
+Why: Up walks forward the way the pilgrim faces, Down walks back, and Left and Right turn it, so holding Up and Left walks the tawaf circle. The camera turns towards the Kaabah (D40), so up the screen is not the way the pilgrim walks.
+Rejected: keys that follow the screen (with the camera turned, Up would walk the pilgrim at an angle to the way it faces).
+Source: docs/specs/tawaf.md
+Status: active
 ```
 
 ## Open items
@@ -412,6 +613,12 @@ Status: active
 | O23 | Claude drafted the Malay copy, and nobody else checks it (shape O2). | flag | spec p2 | user | Resolved | You read the Malay states in the preview before you approve pause 2. Approval means the strings in Interface › Screens and copy stand. 2026-10-22 |
 | O24 | The brief asks for a darker rim round the figure as well as the ground shadow. The preview has only the shadow. | question | spec p2 | user | Resolved | No rim. Skin, hair and the shadow set the white ihram off the marble. D39. 2026-10-22 |
 | O25 | A camera straight behind the figure can't see the Kaabah on a portrait phone. The preview turns the camera towards the Kaabah. | question | spec p2 | user | Resolved | Keep the turned camera: 35° on landscape, 62° and further back on portrait. D40. 2026-10-22 |
+| O26 | CI's headless Chromium draws the tawaf scene fast enough to walk seven rounds inside the test timeout. | unproven | spec p3 | user | Accepted risk | The first CI push in `/build` is the proof, as with walking-skeleton O12: step 1 pushes the page, the hook and the seven-round test first. Movement scales with frame time, and the hook walks 10 times faster. If the test still times out, `/build` stops with a blocker. 2026-10-22 |
+| O27 | How do we check the tawaf scene against D22 on the A35? | question | spec p3 | user | Resolved | `/perf` draws the pilgrim, the Hijr Ismail wall and the glowing line. One `/perf` run covers `/tawaf`. D42. 2026-10-22 |
+| O28 | D29 moves the UI components into the design-system package when tawaf adds more. Tawaf adds seven. | question | spec p3 | user | Resolved | They stay in `src/ui/`. D41 supersedes D29. 2026-10-22 |
+| O29 | How does the e2e test steer the pilgrim for seven rounds? | question | spec p3 | user | Resolved | A `?e2e=1` hook: `window.vh.walkTo(x, z)`, 10 times faster. D43. 2026-10-22 |
+| O30 | Which browser setting counts as "set to Malay"? | question | spec p3 | user | Resolved | The first language only. D34. 2026-10-22 |
+| O31 | How do the arrow keys walk the pilgrim? | question | spec p3 | user | Resolved | Up walks forward, Down walks back, Left and Right turn. D44. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
@@ -451,3 +658,12 @@ _Never delete this section or its rows. See references/ledger.md._
 - **Drift check** — a script that fails when new UI code uses a raw colour or a value outside the design system.
 - **Headless** — a browser running with no window, as on CI.
 - **Vite** — the build tool and dev server.
+- **Unwrapped angle** — an angle that keeps counting past 360°, so seven laps read as 7 × 360°.
+- **Raycast** — finding the point on the floor under a tap, by tracing a line from the camera.
+- **useFrame** — React Three Fiber's hook that runs once per drawn frame.
+- **Ref** — a value React keeps between renders without redrawing the page when it changes.
+- **localStorage** — a small store in the browser for one site, kept between visits on that device.
+- **dt** — the time between two frames.
+- **Damping** — easing the camera towards where it should be, instead of jumping there.
+- **CDN** — copies of the site kept in many cities, so a phone downloads from one nearby.
+- **Supersede** — replace an old decision with a new entry that says so.
