@@ -72,8 +72,14 @@ export function Walker({
     return local.x < 0 ? "left" : "right";
   };
 
+  // The hook's walk ends on arrival, at a wall, or when the walk pauses for a sheet.
+  const settle = () => {
+    arrived.current?.();
+    arrived.current = null;
+  };
+
   useFrame((state, delta) => {
-    if (paused) return;
+    if (paused) return settle();
     const was = pose.current;
     const walked = step(
       was,
@@ -88,10 +94,7 @@ export function Walker({
       stride: moved > 0 ? Math.sin(gait.current) * 0.5 : was.stride * 0.8,
     };
     target.current = walked.target;
-    if (!walked.target && arrived.current) {
-      arrived.current();
-      arrived.current = null;
-    }
+    if (!walked.target) settle();
     tawaf.current = move(tawaf.current, x, z);
     onMove(tawaf.current.started ? null : lineSide(state, x, z));
   });

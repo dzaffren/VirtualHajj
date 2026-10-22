@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { lineAngle } from "../src/scene/mataf";
-import { walkLaps, walkToAngle, walkToLine } from "./tawaf";
+import {
+  openTawaf,
+  past,
+  walkArc,
+  walkLaps,
+  walkTo,
+  walkToAngle,
+  walkToLine,
+} from "./tawaf";
 
 // Walking takes a while on CI, even at the hook's pace (O26).
 test.describe.configure({ timeout: 120_000 });
@@ -9,8 +16,7 @@ test("walks seven rounds with hints on", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Start tawaf" }).click();
   await expect(page).toHaveURL(/\/tawaf\/$/);
-  await page.goto("/tawaf/?e2e=1");
-  await expect(page.locator(".app")).toHaveAttribute("data-state", "ready");
+  await openTawaf(page);
   await expect(page.getByText("Before you start")).toBeVisible();
 
   await walkToLine(page);
@@ -20,7 +26,7 @@ test("walks seven rounds with hints on", async ({ page }) => {
     await expect(page.getByText(`Round ${lap + 1} of 7`)).toBeVisible();
     if (lap !== 3) return;
     // In round 4, a 2 m step back clockwise to turn round names no mistake.
-    const into = lineAngle + 0.05 + 2 * Math.PI * 3 + 0.5;
+    const into = past + 0.5;
     await walkToAngle(page, into);
     await walkToAngle(page, into - 2 / 16);
     await walkToAngle(page, into);
@@ -35,12 +41,48 @@ test("walks seven rounds with hints on", async ({ page }) => {
 });
 
 test("a click on the floor walks the pilgrim there", async ({ page }) => {
-  await page.goto("/tawaf/?e2e=1");
-  await expect(page.locator(".app")).toHaveAttribute("data-state", "ready");
+  await openTawaf(page);
   const before = await page.evaluate(() => window.vh!.position());
   const box = (await page.locator("canvas").boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
   await expect
     .poll(() => page.evaluate(() => window.vh!.position()))
     .not.toEqual(before);
+});
+
+test("names the wrong way and the Hijr Ismail", async ({ page }) => {
+  await openTawaf(page);
+  await walkToLine(page);
+  await walkLaps(page, 2);
+  const card = page.locator(".card");
+  await expect(card).toContainText("Round 3 of 7");
+
+  // Round 3: 8 m on, then 4 m back clockwise, then on to the line.
+  await walkToAngle(page, past + 0.5);
+  await walkToAngle(page, past + 0.5 - 4 / 16);
+  await expect(card).toContainText("This round does not count");
+  await expect(card).toContainText(
+    "Turn round, so the Kaabah is on your left.",
+  );
+  await walkArc(page, past + 0.5, past + 2 * Math.PI);
+  await expect(card).toContainText("Round 3 of 7");
+
+  // Round 3 again: in through the Hijr Ismail's east gap, out through the west one, and on to the line.
+  await walkArc(page, past, 0.3);
+  await walkTo(page, 8, -6);
+  await walkTo(page, 0, -9);
+  await expect(card).toContainText("This round does not count");
+  await expect(card).toContainText("Walk outside the Hijr Ismail wall.");
+  await walkTo(page, -8, -6);
+  await walkArc(page, 2.8, past + 2 * Math.PI);
+  await expect(card).toContainText("Round 3 of 7");
+
+  await walkLaps(page, 5);
+  const done = page.getByRole("dialog");
+  await expect(done).toContainText(
+    "Round 3: you walked with the Kaabah on your right.",
+  );
+  await expect(done).toContainText(
+    "Round 3: you walked inside the Hijr Ismail.",
+  );
 });
