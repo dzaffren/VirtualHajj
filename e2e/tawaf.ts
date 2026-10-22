@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { lineAngle, onCircle } from "../src/scene/mataf";
+import { lineAngle, maqamSpot, onCircle } from "../src/scene/mataf";
 
 // Steers the pilgrim through the ?e2e=1 hook (D43), round a circle 16 m out, clear of the Kaabah and the Hijr Ismail wall.
 const r = 16;
@@ -28,9 +28,21 @@ export async function walkArc(page: Page, from: number, to: number) {
     await walkToAngle(page, from + ((to - from) * i) / n);
 }
 
-// From the start, just past the Hajar Aswad line, so round 1 starts.
-export function walkToLine(page: Page) {
-  return walkToAngle(page, past);
+// From the start, just past the Hajar Aswad line, so round 1 starts. With hints on, the walk stops at the istilam sheet, and Start round 1 goes on.
+export async function walkToLine(page: Page) {
+  await walkToAngle(page, past);
+  const hints = page.locator(".top-bar").getByRole("switch");
+  if ((await hints.getAttribute("aria-checked")) === "false") return;
+  await page
+    .getByRole("button", { name: /^(Start round 1|Mula pusingan 1)$/ })
+    .click();
+  await walkToAngle(page, past);
+}
+
+// To the spot behind the Maqam Ibrahim, from its side away from the Kaabah's door. The walk stops at the rakaat sheet.
+export async function walkToSpot(page: Page) {
+  await walkTo(page, maqamSpot.x, maqamSpot.z + maqamSpot.radius + 1);
+  await walkTo(page, maqamSpot.x, maqamSpot.z);
 }
 
 // n laps anticlockwise from just past the line. after(lap) runs as each lap crosses the line.
