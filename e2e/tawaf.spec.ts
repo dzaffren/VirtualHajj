@@ -257,3 +257,15 @@ test("an open sheet keeps focus from the controls behind it", async ({
     expect(behind, `focus after ${key}`).toBe(false);
   }
 });
+
+test.describe("with reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("the hints switch thumb jumps, not slides", async ({ page }) => {
+    await openTawaf(page);
+    await expect(page.locator(".top-bar .switch-thumb")).toHaveCSS(
+      "transition-duration",
+      "0s",
+    );
+  });
+});

@@ -614,6 +614,9 @@ body {
   .mark.done {
     animation: none;
   }
+  .switch-thumb {
+    transition: none;
+  }
   .quiet-button:active {
     transform: none;
   }
