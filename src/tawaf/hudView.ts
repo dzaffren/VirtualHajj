@@ -6,13 +6,26 @@ export type Mistake =
   | { kind: "early"; counted: number }
   | { kind: "over"; walked: number };
 
+// The part of a round the pilgrim walks, with hints on: the istilam reminder after the line, then the walk, then the doa from the Rukun Yamani.
+export type RoundPart = "istilam" | "walk" | "doa";
+
+export type Side = "left" | "right" | null;
+
 export type HudView =
   | { phase: "loading" | "no-webgl" | "stopped" }
-  | { phase: "before-line"; lineOffScreen: "left" | "right" | null }
-  | { phase: "round"; round: number }
+  | { phase: "before-line"; lineOffScreen: Side }
+  | { phase: "istilam"; demo: boolean }
+  | { phase: "round"; round: number; part?: RoundPart }
   | { phase: "void"; round: number; kind: MistakeKind }
   | { phase: "short"; counted: number }
-  | { phase: "done"; mistakes: Mistake[] };
+  | {
+      phase: "to-maqam";
+      atLine: boolean;
+      spotOffScreen: Side;
+      over: number | null;
+    }
+  | { phase: "rakaat" }
+  | { phase: "done"; mistakes: Mistake[]; prayed?: boolean };
 
 export function countedRounds(view: HudView): number {
   switch (view.phase) {
@@ -21,6 +34,8 @@ export function countedRounds(view: HudView): number {
       return view.round - 1;
     case "short":
       return view.counted;
+    case "to-maqam":
+    case "rakaat":
     case "done":
       return 7;
     default:

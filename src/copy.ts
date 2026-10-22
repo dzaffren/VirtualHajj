@@ -31,6 +31,22 @@ const msWords = [
 const word = (words: string[], n: number) => words[n] ?? String(n);
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// The Arabic and its reading in Latin letters, shared by both languages. The doa carry harakat; the names do not.
+export const arabic = {
+  hajarAswad: "الحجر الأسود",
+  maqamIbrahim: "مقام إبراهيم",
+  istilam: {
+    doa: "بِسْمِ اللهِ وَاللهُ أَكْبَرُ",
+    reading: "Bismillāhi wallāhu akbar",
+  },
+  rabbana: {
+    doa: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+    reading:
+      "Rabbanā ātinā fid-dunyā ḥasanah, wa fil-ākhirati ḥasanah, wa qinā ʿadhāban-nār",
+  },
+};
+const istilamWords = arabic.istilam.reading;
+
 export type Copy = (typeof copy)[Lang];
 
 export const copy = {
@@ -111,6 +127,39 @@ export const copy = {
         : `You pressed Done after ${word(enWords, n)} round${n === 1 ? "" : "s"}.`,
     listOver: (n: number) =>
       `You walked ${word(enWords, n)} rounds. Tawaf has seven.`,
+
+    stationStart: "Station · Start of tawaf",
+    stationAfter: "Station · After tawaf",
+    istilamTitle: "The Hajar Aswad line",
+    istilamBody:
+      "Every round starts and ends here. Face the Hajar Aswad, raise your right hand towards it, and say:",
+    istilamMeaning: "In the name of Allah, and Allah is the Greatest.",
+    istilamThen: "Then turn so the Kaabah is on your left, and start round 1.",
+    startRound1: "Start round 1",
+    showMeHow: "Show me how",
+    istilamSay: "Raise your right hand to the Hajar Aswad.",
+    istilamNote: `Say “${istilamWords}”. Then walk on, with the Kaabah on your left.`,
+    doaSay: "Say this doa as you walk.",
+    rabbanaMeaning:
+      "Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
+
+    roundsDone: "Seven rounds done",
+    toMaqamSay: "Walk to the glowing spot behind the Maqam Ibrahim.",
+    toMaqamLineNote: `First raise your right hand to the Hajar Aswad, and say “${istilamWords}”.`,
+    toMaqamNote: "Pray two rakaat there, facing the Kaabah.",
+    maqamName: "Maqam Ibrahim",
+    turnToMaqam: "Turn to the Maqam Ibrahim",
+    sevenCount: "Seven rounds count.",
+    finishTawaf: "Finish tawaf",
+    rakaatTitle: "Two rakaat behind the Maqam Ibrahim",
+    rakaatBody:
+      "Face the Kaabah, with the Maqam Ibrahim in front of you, and pray two rakaat.",
+    rakaatFirst: "In the first rakaat, read al-Kafirun after al-Fatihah.",
+    rakaatSecond: "In the second rakaat, read al-Ikhlas after al-Fatihah.",
+    rakaatCrowd:
+      "When the crowd is too dense here, you may pray anywhere in the Masjidil Haram.",
+    noRakaat:
+      "You did not pray the two rakaat behind the Maqam Ibrahim. They are sunnah, so your tawaf still counts.",
   },
   ms: {
     appName: "VirtualHajj",
@@ -191,5 +240,41 @@ export const copy = {
         : `Anda menekan Selesai selepas ${word(msWords, n)} pusingan.`,
     listOver: (n: number) =>
       `Anda berjalan ${word(msWords, n)} pusingan. Tawaf ada tujuh.`,
+
+    stationStart: "Stesen · Permulaan tawaf",
+    stationAfter: "Stesen · Selepas tawaf",
+    istilamTitle: "Garisan Hajar Aswad",
+    istilamBody:
+      "Setiap pusingan bermula dan tamat di sini. Hadap Hajar Aswad, angkat tangan kanan ke arahnya, dan sebut:",
+    istilamMeaning: "Dengan nama Allah, dan Allah Maha Besar.",
+    istilamThen:
+      "Kemudian pusing supaya Kaabah di sebelah kiri anda, dan mulakan pusingan 1.",
+    startRound1: "Mula pusingan 1",
+    showMeHow: "Tunjukkan cara",
+    istilamSay: "Angkat tangan kanan ke arah Hajar Aswad.",
+    istilamNote: `Sebut “${istilamWords}”. Kemudian teruskan, dengan Kaabah di sebelah kiri anda.`,
+    doaSay: "Baca doa ini sambil berjalan.",
+    rabbanaMeaning:
+      "Wahai Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat, dan peliharalah kami daripada azab neraka.",
+
+    roundsDone: "Tujuh pusingan selesai",
+    toMaqamSay: "Berjalan ke tempat yang bercahaya di belakang Maqam Ibrahim.",
+    toMaqamLineNote: `Mula-mula angkat tangan kanan ke arah Hajar Aswad, dan sebut “${istilamWords}”.`,
+    toMaqamNote: "Solat dua rakaat di situ, menghadap Kaabah.",
+    maqamName: "Maqam Ibrahim",
+    turnToMaqam: "Pusing ke Maqam Ibrahim",
+    sevenCount: "Tujuh pusingan dikira.",
+    finishTawaf: "Tamatkan tawaf",
+    rakaatTitle: "Dua rakaat di belakang Maqam Ibrahim",
+    rakaatBody:
+      "Hadap Kaabah, dengan Maqam Ibrahim di hadapan anda, dan solat dua rakaat.",
+    rakaatFirst:
+      "Dalam rakaat pertama, baca surah al-Kafirun selepas al-Fatihah.",
+    rakaatSecond:
+      "Dalam rakaat kedua, baca surah al-Ikhlas selepas al-Fatihah.",
+    rakaatCrowd:
+      "Jika terlalu sesak di sini, anda boleh solat di mana-mana dalam Masjidil Haram.",
+    noRakaat:
+      "Anda tidak solat dua rakaat di belakang Maqam Ibrahim. Ia sunat, jadi tawaf anda tetap sah.",
   },
 };

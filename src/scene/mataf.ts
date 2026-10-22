@@ -42,3 +42,10 @@ export function onLine(x: number, z: number) {
   const out = Math.min(Math.max(Math.hypot(x, z), corner), corner + lineLength);
   return onCircle(out, lineAngle);
 }
+
+// The Maqam Ibrahim stands about 10.5 m out from the door face, in front of the door, near the Hajar Aswad corner.
+// The spot for the two rakaat is 3 m further out, on the line from the Kaabah through the Maqam; within 3 m of it counts (O6).
+export const maqam = { x: 16, z: 2.5, radius: 0.9 };
+export const maqamSpot = { x: maqam.x + 3, z: maqam.z, radius: 3 };
+// The corner tawaf passes just before the Hajar Aswad.
+export const rukunYamani = { x: -hajarAswad.x, z: hajarAswad.z };

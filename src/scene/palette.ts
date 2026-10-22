@@ -8,6 +8,7 @@ const cloth = {
   skin: "#A8754F",
   hair: "#3B2A20",
   stoneFrame: "#C9CDD2",
+  maqamGold: "#C9A24A",
 };
 
 export const palette = {
@@ -16,6 +17,7 @@ export const palette = {
     ground: "#ECE6DC",
     hijrWall: "#F7F3EA",
     lineMark: "#BCA78A",
+    maqamBase: "#F7F3EA",
     shadow: "#2A1F14",
     hemisphere: 1.6,
     sun: 2.4,
@@ -26,6 +28,7 @@ export const palette = {
     ground: "#46546A",
     hijrWall: "#5A6880",
     lineMark: "#2F3B4E",
+    maqamBase: "#5A6880",
     shadow: "#000000",
     hemisphere: 1.1,
     sun: 1.4,

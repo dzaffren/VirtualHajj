@@ -156,7 +156,12 @@ export interface PilgrimPose {
   z: number;
   facing: number;
   stride: number;
+  // 0 to 1: the right hand rises towards the Hajar Aswad, for istilam.
+  raise?: number;
 }
+
+// The upper arm's turn for istilam: forward and a little above the shoulder.
+const istilamArm = -1.9;
 
 // A man in ihram, stylised with no face (D31, D37), with a ground shadow so white ihram reads on white marble.
 // The pose comes from a ref each frame, so walking never re-renders React.
@@ -168,7 +173,7 @@ export function Pilgrim({ pose }: { pose: RefObject<PilgrimPose> }) {
     [p.ihram, p.skin, p.hair],
   );
   useFrame(() => {
-    const { x, z, facing, stride } = pose.current;
+    const { x, z, facing, stride, raise = 0 } = pose.current;
     group.current!.position.set(x, 0, z);
     group.current!.rotation.y = facing;
     bones.get("thighL")!.rotation.x = stride;
@@ -176,7 +181,9 @@ export function Pilgrim({ pose }: { pose: RefObject<PilgrimPose> }) {
     bones.get("shinL")!.rotation.x = Math.max(0, stride) * 0.8;
     bones.get("shinR")!.rotation.x = Math.max(0, -stride) * 0.8;
     bones.get("upperArmL")!.rotation.x = -stride * 0.8;
-    bones.get("upperArmR")!.rotation.x = stride * 0.8;
+    bones.get("upperArmR")!.rotation.x =
+      stride * 0.8 * (1 - raise) + istilamArm * raise;
+    bones.get("forearmR")!.rotation.x = -0.4 * raise;
   });
   return (
     <group ref={group}>

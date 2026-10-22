@@ -1,4 +1,10 @@
-import { facingAnticlockwise, lineAngle, onCircle } from "../scene/mataf";
+import {
+  facingAnticlockwise,
+  hajarAswad,
+  lineAngle,
+  maqamSpot,
+  onCircle,
+} from "../scene/mataf";
 import type { PilgrimPose } from "../scene/Pilgrim";
 import type { HudView } from "../tawaf/hudView";
 
@@ -27,6 +33,29 @@ const insideHijr: PilgrimPose = {
   z: -9.5,
   facing: facingAnticlockwise(Math.atan2(9.5, 1.5)),
   stride: 0.35,
+};
+
+// Stopped before the line, facing the Hajar Aswad corner, as the istilam sheet rises.
+const beforeLine = onCircle(r, lineAngle - 0.04);
+const atStone = (raise: number): PilgrimPose => ({
+  ...beforeLine,
+  facing: Math.atan2(hajarAswad.x - beforeLine.x, hajarAswad.z - beforeLine.z),
+  stride: 0,
+  raise,
+});
+// On the way from the line to the spot behind the Maqam Ibrahim, facing it.
+const toSpot: PilgrimPose = {
+  x: 17.5,
+  z: 6.5,
+  facing: Math.atan2(maqamSpot.x - 17.5, maqamSpot.z - 6.5),
+  stride: 0.35,
+};
+// At the spot, facing the Kaabah over the Maqam.
+const atSpot: PilgrimPose = {
+  x: maqamSpot.x,
+  z: maqamSpot.z,
+  facing: -Math.PI / 2,
+  stride: 0,
 };
 
 const wrongWayRound3 = { kind: "wrong-way", round: 3 } as const;
@@ -105,6 +134,111 @@ export const states: PreviewState[] = [
     pose: insideHijr,
   },
   {
+    id: "istilam",
+    group: "Stations, hints on",
+    label: "Istilam sheet at the Hajar Aswad line",
+    scenario: "1",
+    page: "tawaf",
+    view: { phase: "istilam", demo: false },
+    hints: true,
+    pose: atStone(0),
+  },
+  {
+    id: "istilam-demo",
+    group: "Stations, hints on",
+    label: "Show me how: the right hand raised",
+    scenario: "5",
+    page: "tawaf",
+    view: { phase: "istilam", demo: true },
+    hints: true,
+    pose: atStone(1),
+  },
+  {
+    id: "round4-istilam",
+    group: "Stations, hints on",
+    label: "Round 4: the istilam reminder after the line",
+    scenario: "1",
+    page: "tawaf",
+    view: { phase: "round", round: 4, part: "istilam" },
+    hints: true,
+    pose: at(lineAngle + 0.15, 0.35),
+  },
+  {
+    id: "round3-doa",
+    group: "Stations, hints on",
+    label: "Round 3: the doa from the Rukun Yamani",
+    scenario: "2",
+    page: "tawaf",
+    view: { phase: "round", round: 3, part: "doa" },
+    hints: true,
+    pose: at(lineAngle - 0.8, 0.35),
+  },
+  {
+    id: "to-maqam-line",
+    group: "Stations, hints on",
+    label: "Seven rounds done, at the line",
+    scenario: "3",
+    page: "tawaf",
+    view: { phase: "to-maqam", atLine: true, spotOffScreen: null, over: null },
+    hints: true,
+    pose: at(lineAngle + 0.08, 0.35),
+  },
+  {
+    id: "to-maqam",
+    group: "Stations, hints on",
+    label: "On the way to the Maqam Ibrahim",
+    scenario: "3",
+    page: "tawaf",
+    view: { phase: "to-maqam", atLine: false, spotOffScreen: null, over: null },
+    hints: true,
+    pose: toSpot,
+  },
+  {
+    id: "to-maqam-away",
+    group: "Stations, hints on",
+    label: "The spot out of sight: edge arrow",
+    scenario: "3",
+    page: "tawaf",
+    view: {
+      phase: "to-maqam",
+      atLine: false,
+      spotOffScreen: "right",
+      over: null,
+    },
+    hints: true,
+    pose: at(0.9, 0.35),
+  },
+  {
+    id: "rakaat",
+    group: "Stations, hints on",
+    label: "Two rakaat behind the Maqam Ibrahim",
+    scenario: "3, 4",
+    page: "tawaf",
+    view: { phase: "rakaat" },
+    hints: true,
+    pose: atSpot,
+  },
+  {
+    id: "off-seven",
+    group: "Stations, hints off",
+    label: "Done at seven: walk to the Maqam alone",
+    scenario: "4",
+    page: "tawaf",
+    view: { phase: "to-maqam", atLine: true, spotOffScreen: null, over: null },
+    hints: false,
+    pose: at(lineAngle + 0.08, 0),
+  },
+  {
+    id: "off-eight",
+    group: "Stations, hints off",
+    label: "Done at eight",
+    scenario: "4",
+    page: "tawaf",
+    view: { phase: "to-maqam", atLine: true, spotOffScreen: null, over: 8 },
+    hints: false,
+    pose: at(lineAngle + 0.08, 0),
+  },
+  {
     id: "menu",
     group: "Hints on",
     label: "Menu open",
@@ -177,6 +311,16 @@ export const states: PreviewState[] = [
     view: { phase: "done", mistakes: [{ kind: "over", walked: 8 }] },
     hints: false,
     pose: at(lineAngle + 0.05, 0),
+  },
+  {
+    id: "done-no-rakaat",
+    group: "Done",
+    label: "Finished without the two rakaat",
+    scenario: "4",
+    page: "tawaf",
+    view: { phase: "done", mistakes: [], prayed: false },
+    hints: false,
+    pose: at(lineAngle + 0.4, 0),
   },
   {
     id: "loading",

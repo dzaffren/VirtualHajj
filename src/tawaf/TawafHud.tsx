@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { copy, type Copy, type Lang } from "../copy";
+import { arabic, copy, type Copy, type Lang } from "../copy";
+import { DoaBlock } from "../ui/DoaBlock";
 import { HintsSwitch } from "../ui/HintsSwitch";
 import { Icon } from "../ui/Icon";
 import { IconButton } from "../ui/IconButton";
@@ -8,8 +9,15 @@ import { PrimaryButton } from "../ui/PrimaryButton";
 import { ProgressMarks } from "../ui/ProgressMarks";
 import { QuietButton } from "../ui/QuietButton";
 import { Sheet } from "../ui/Sheet";
+import { StationSheet } from "../ui/StationSheet";
+import { Toast } from "../ui/Toast";
 import { TopCard } from "../ui/TopCard";
-import { countedRounds, type HudView, type Mistake } from "./hudView";
+import {
+  countedRounds,
+  type HudView,
+  type Mistake,
+  type Side,
+} from "./hudView";
 
 export interface TawafHudProps {
   view: HudView;
@@ -24,6 +32,10 @@ export interface TawafHudProps {
   onBack: () => void;
   onTurnToLine: () => void;
   onReload: () => void;
+  onStartRound?: () => void;
+  onShowMe?: () => void;
+  onFinish?: () => void;
+  onTurnToSpot?: () => void;
 }
 
 // Keeps a sheet's last content on screen while it leaves.
@@ -42,7 +54,12 @@ export function TawafHud(props: TawafHudProps) {
   const { view, hints, lang } = props;
   const t = copy[lang];
   const menu = useLeaving(props.menuOpen ? true : null);
-  const done = useLeaving(view.phase === "done" ? view.mistakes : null);
+  const done = useLeaving(view.phase === "done" ? view : null);
+  const station = useLeaving(
+    view.phase === "rakaat" || (view.phase === "istilam" && !view.demo)
+      ? view.phase
+      : null,
+  );
 
   if (view.phase === "loading")
     return <TopCard name={t.tawaf} say={<span>{t.loading}</span>} />;
@@ -66,7 +83,12 @@ export function TawafHud(props: TawafHudProps) {
       />
     );
 
-  const walking = view.phase !== "done";
+  // The pilgrim stands still at a station, and the tawaf is over on the done card.
+  const walking =
+    view.phase !== "done" &&
+    view.phase !== "istilam" &&
+    view.phase !== "rakaat";
+  const afterRounds = view.phase === "to-maqam";
   return (
     <>
       {/* While a sheet is open, the controls behind its scrim take no focus or clicks. */}
@@ -94,25 +116,90 @@ export function TawafHud(props: TawafHudProps) {
         )}
         {walking && !hints && (
           <div className="corner corner-right">
-            <PrimaryButton onClick={props.onDone}>{t.done}</PrimaryButton>
+            {afterRounds ? (
+              <PrimaryButton onClick={props.onFinish}>
+                {t.finishTawaf}
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton onClick={props.onDone}>{t.done}</PrimaryButton>
+            )}
           </div>
         )}
-        {hints && view.phase === "before-line" && view.lineOffScreen && (
-          <button
-            type="button"
-            className={`edge-arrow edge-${view.lineOffScreen}`}
-            aria-label={t.turnToLine}
-            onClick={props.onTurnToLine}
+        {afterRounds && !hints && (
+          <Toast
+            icon={view.over ? "circle-alert" : "check"}
+            mistake={!!view.over}
           >
-            {view.lineOffScreen === "left" && <Icon name="arrow-left" />}
-            <span>{t.lineName}</span>
-            {view.lineOffScreen === "right" && <Icon name="arrow-right" />}
-          </button>
+            {view.over ? t.listOver(view.over) : t.sevenCount}
+          </Toast>
+        )}
+        {hints && view.phase === "before-line" && (
+          <EdgeArrow
+            side={view.lineOffScreen}
+            name={t.lineName}
+            label={t.turnToLine}
+            onClick={props.onTurnToLine}
+          />
+        )}
+        {hints && afterRounds && (
+          <EdgeArrow
+            side={view.spotOffScreen}
+            name={t.maqamName}
+            label={t.turnToMaqam}
+            onClick={props.onTurnToSpot}
+          />
         )}
       </div>
+      {station.shown === "istilam" && (
+        <StationSheet
+          station={t.stationStart}
+          title={t.istilamTitle}
+          arabicName={arabic.hajarAswad}
+          titleId="station-title"
+          leaving={station.leaving}
+          onGone={station.onGone}
+        >
+          <p className="station-body">{t.istilamBody}</p>
+          <DoaBlock
+            doa={arabic.istilam.doa}
+            reading={arabic.istilam.reading}
+            meaning={t.istilamMeaning}
+          />
+          <p className="sheet-note">{t.istilamThen}</p>
+          <div className="station-actions">
+            <PrimaryButton onClick={props.onStartRound}>
+              {t.startRound1}
+            </PrimaryButton>
+            <QuietButton onClick={props.onShowMe}>{t.showMeHow}</QuietButton>
+          </div>
+        </StationSheet>
+      )}
+      {station.shown === "rakaat" && (
+        <StationSheet
+          station={t.stationAfter}
+          title={t.rakaatTitle}
+          arabicName={arabic.maqamIbrahim}
+          titleId="station-title"
+          leaving={station.leaving}
+          onGone={station.onGone}
+        >
+          <p className="station-body">{t.rakaatBody}</p>
+          <div className="rakaat">
+            <p>{t.rakaatFirst}</p>
+            <p>{t.rakaatSecond}</p>
+          </div>
+          <p className="sheet-note">{t.rakaatCrowd}</p>
+          <div className="station-actions">
+            <PrimaryButton onClick={props.onFinish}>
+              {t.finishTawaf}
+            </PrimaryButton>
+          </div>
+        </StationSheet>
+      )}
       {done.shown && (
         <DoneSheet
-          mistakes={done.shown}
+          mistakes={done.shown.mistakes}
+          prayed={done.shown.prayed ?? true}
           leaving={done.leaving}
           onGone={done.onGone}
           t={t}
@@ -133,7 +220,9 @@ export function TawafHud(props: TawafHudProps) {
 
 function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
   const counted = countedRounds(view);
-  let lead: string, say: string, note: string;
+  let lead: string, say: string;
+  let note: string | null = null;
+  let doa = false;
   let mistake = false;
   switch (view.phase) {
     case "before-line":
@@ -142,10 +231,17 @@ function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
       break;
     case "round":
       if (!hints) return null;
+      lead = t.roundOf(view.round);
+      if (view.part === "istilam") [say, note] = [t.istilamSay, t.istilamNote];
+      else if (view.part === "doa") [say, doa] = [t.doaSay, true];
+      else [say, note] = [t.roundSay, t.roundBody(view.round)];
+      break;
+    case "to-maqam":
+      if (!hints) return null;
       [lead, say, note] = [
-        t.roundOf(view.round),
-        t.roundSay,
-        t.roundBody(view.round),
+        t.roundsDone,
+        t.toMaqamSay,
+        view.atLine ? t.toMaqamLineNote : t.toMaqamNote,
       ];
       break;
     case "void":
@@ -165,7 +261,15 @@ function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
     default:
       return null;
   }
-  const step = `${view.phase}-${counted}-${"kind" in view ? view.kind : ""}`;
+  const part =
+    "kind" in view
+      ? view.kind
+      : "part" in view
+        ? view.part
+        : "atLine" in view
+          ? view.atLine
+          : "";
+  const step = `${view.phase}-${counted}-${part}`;
   return (
     <section
       className={mistake ? "card below-bar card-mistake" : "card below-bar"}
@@ -179,17 +283,55 @@ function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
         {hints && view.phase !== "short" && (
           <ProgressMarks
             counted={counted}
-            walking={view.phase !== "before-line"}
+            walking={view.phase !== "before-line" && view.phase !== "to-maqam"}
           />
         )}
       </div>
       <h1 className="card-say step" key={`say-${step}`}>
         {say}
       </h1>
-      <p className="card-note step" key={`note-${step}`}>
-        {note}
-      </p>
+      {doa && (
+        <div className="step" key={`doa-${step}`}>
+          <DoaBlock
+            doa={arabic.rabbana.doa}
+            reading={arabic.rabbana.reading}
+            meaning={t.rabbanaMeaning}
+          />
+        </div>
+      )}
+      {note && (
+        <p className="card-note step" key={`note-${step}`}>
+          {note}
+        </p>
+      )}
     </section>
+  );
+}
+
+// Points to the next target while the camera can't see it. A tap turns the pilgrim towards it.
+function EdgeArrow({
+  side,
+  name,
+  label,
+  onClick,
+}: {
+  side: Side;
+  name: string;
+  label: string;
+  onClick?: () => void;
+}) {
+  if (!side) return null;
+  return (
+    <button
+      type="button"
+      className={`edge-arrow edge-${side}`}
+      aria-label={label}
+      onClick={onClick}
+    >
+      {side === "left" && <Icon name="arrow-left" />}
+      <span>{name}</span>
+      {side === "right" && <Icon name="arrow-right" />}
+    </button>
   );
 }
 
@@ -214,12 +356,13 @@ interface SheetPart {
 
 function DoneSheet({
   mistakes,
+  prayed,
   leaving,
   onGone,
   t,
   onStartAgain,
   onBack,
-}: { mistakes: Mistake[] } & SheetPart & TawafHudProps) {
+}: { mistakes: Mistake[]; prayed: boolean } & SheetPart & TawafHudProps) {
   return (
     <Sheet titleId="done-title" leaving={leaving} onGone={onGone}>
       <h2 className="sheet-title" id="done-title">
@@ -240,6 +383,12 @@ function DoneSheet({
             ))}
           </ul>
         </div>
+      )}
+      {!prayed && (
+        <p className="done-note">
+          <Icon name="info" />
+          <span>{t.noRakaat}</span>
+        </p>
       )}
       <div className="sheet-group">
         <PrimaryButton onClick={onStartAgain}>{t.walkAgain}</PrimaryButton>
