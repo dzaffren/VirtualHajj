@@ -122,12 +122,15 @@ describe("tawafRules, istilam at the line", () => {
     expect(s.started).toBe(false);
   });
 
-  it("raises the sheet when one frame carries the pilgrim past the line", () => {
+  it("raises the sheet when one frame carries the pilgrim past the line, and the next crossing starts round 1", () => {
     const s = before(begin(true), 2);
-    const p = onCircle(r, lineAngle + metres(1.4));
-    const next = move(s, p.x, p.z);
+    const over = onCircle(r, lineAngle + metres(1.4));
+    let next = move(s, over.x, over.z);
     expect(hudView(next)).toEqual({ phase: "istilam", demo: false });
     expect(next.started).toBe(false);
+    // The pilgrim stands back before the line, and one frame carries it past again.
+    next = move(startRound(next), over.x, over.z);
+    expect(hudView(next)).toEqual({ phase: "round", round: 1, part: "walk" });
   });
 
   it("stands the pilgrim 0.6 m before the line, facing the Hajar Aswad", () => {

@@ -77,11 +77,12 @@ export function move(s: TawafState, x: number, z: number): TawafState {
   // After the rounds, nothing counts or trips: the pilgrim may walk to the spot behind the Maqam Ibrahim by any path.
   if (next.afterRounds) return inSpot(x, z) ? { ...next, rakaat: true } : next;
 
-  // With hints on, an anticlockwise approach within 1 m of the line raises the istilam sheet, and so does a crossing. That crossing starts nothing.
+  // With hints on, an anticlockwise approach within 1 m of the line raises the istilam sheet, and so does a crossing.
+  // The angle stays before the line, where the pilgrim stands for istilam, so the next crossing starts round 1.
   if (s.hints && s.istilam === "due" && !s.started && d > 0) {
     const ahead =
       (lineAngle + turn * (crossings(s.angle) + 1) - angle) * Math.hypot(x, z);
-    if (ahead <= stopBefore) return { ...next, istilam: "sheet" };
+    if (ahead <= stopBefore) return { ...s, istilam: "sheet" };
   }
 
   if (k > crossings(s.angle)) {
