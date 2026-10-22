@@ -47,6 +47,8 @@ export function onLine(x: number, z: number) {
 // The spot for the two rakaat is 3 m further out, on the line from the Kaabah through the Maqam; within 3 m of it counts (O6).
 export const maqam = { x: 16, z: 2.5, radius: 0.9 };
 export const maqamSpot = { x: maqam.x + 3, z: maqam.z, radius: 3 };
+export const inSpot = (x: number, z: number) =>
+  Math.hypot(x - maqamSpot.x, z - maqamSpot.z) <= maqamSpot.radius;
 // The corner tawaf passes just before the Hajar Aswad.
 export const rukunYamani = { x: -hajarAswad.x, z: hajarAswad.z };
 // The corner tawaf passes just after the Hajar Aswad.

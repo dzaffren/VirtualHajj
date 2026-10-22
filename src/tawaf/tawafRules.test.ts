@@ -3,11 +3,13 @@ import {
   hajarAswad,
   istilamPose,
   lineAngle,
+  maqamSpot,
   onCircle,
   rukunIraqiPast,
   rukunYamaniPast,
 } from "../scene/mataf";
 import {
+  finish,
   hudView,
   move,
   pressDone,
@@ -83,11 +85,14 @@ describe("tawafRules, seven clean rounds", () => {
     });
   });
 
-  it("ends the tawaf after seven clean rounds, with no mistakes", () => {
-    expect(hudView(laps(toLine(begin(true)), 7))).toEqual({
-      phase: "done",
-      mistakes: [],
+  it("leads to the Maqam Ibrahim after seven clean rounds, with no mistakes", () => {
+    const s = laps(toLine(begin(true)), 7);
+    expect(hudView(s)).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: null,
     });
+    expect(s.mistakes).toEqual([]);
   });
 
   it("names nothing for a 2 m step back in round 4", () => {
@@ -197,9 +202,13 @@ describe("tawafRules, istilam at the line", () => {
   });
 });
 
-// Walks in a straight line from the circle to a spot, in steps of about 30 cm.
-function walkStraight(s: TawafState, x: number, z: number): TawafState {
-  const from = onCircle(r, s.angle);
+// Walks in a straight line to a spot, in steps of about 30 cm: from the circle, or from another spot.
+function walkStraight(
+  s: TawafState,
+  x: number,
+  z: number,
+  from = onCircle(r, s.angle),
+): TawafState {
   const n = Math.ceil(Math.hypot(x - from.x, z - from.z) / 0.3);
   for (let i = 1; i <= n; i++)
     s = move(
@@ -264,10 +273,8 @@ describe("tawafRules, mistakes", () => {
     let s = nextLine(walk(round3(), -metres(4)));
     expect(hudView(s)).toEqual({ phase: "round", round: 3, part: "istilam" });
     s = laps(s, 5);
-    expect(hudView(s)).toEqual({
-      phase: "done",
-      mistakes: [{ kind: "wrong-way", round: 3 }],
-    });
+    expect(hudView(s).phase).toBe("to-maqam");
+    expect(s.mistakes).toEqual([{ kind: "wrong-way", round: 3 }]);
   });
 
   it("names one mistake a round, until it starts again", () => {
@@ -285,6 +292,52 @@ describe("tawafRules, mistakes", () => {
   });
 });
 
+describe("tawafRules, two rakaat behind the Maqam Ibrahim", () => {
+  const seven = () => laps(toLine(begin(true)), 7);
+  // Outside the spot by 20 cm, on the side away from the Kaabah's door face, then 30 cm on into it.
+  const edge = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius + 0.2 };
+  const inside = { x: maqamSpot.x, z: maqamSpot.z + maqamSpot.radius - 0.1 };
+
+  it("gives the spot's side while the camera can't see it", () => {
+    expect(hudView(seven(), "left")).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: "left",
+      over: null,
+    });
+  });
+
+  it("names no mistake on a walk back clockwise, or through the Hijr Ismail", () => {
+    let s = walk(seven(), -2.6);
+    s = walkStraight(s, 0, -9);
+    expect(hudView(s).phase).toBe("to-maqam");
+    expect(s.mistakes).toEqual([]);
+  });
+
+  it("counts no more rounds at the line", () => {
+    const s = walk(walk(seven(), -0.2), 0.4);
+    expect(s.counted).toBe(7);
+    expect(hudView(s).phase).toBe("to-maqam");
+  });
+
+  it("raises the rakaat sheet within 3 m of the spot, and not before", () => {
+    let s = walkStraight(seven(), edge.x, edge.z);
+    expect(hudView(s).phase).toBe("to-maqam");
+    s = walkStraight(s, inside.x, inside.z, edge);
+    expect(hudView(s)).toEqual({ phase: "rakaat" });
+    expect(walkStraight(s, maqamSpot.x, maqamSpot.z, inside)).toEqual(s);
+  });
+
+  it("finishes the tawaf with the rakaat prayed", () => {
+    let s = walkStraight(seven(), edge.x, edge.z);
+    s = walkStraight(s, inside.x, inside.z, edge);
+    expect(hudView(finish(s))).toEqual({
+      phase: "done",
+      mistakes: [],
+      prayed: true,
+    });
+  });
+});
+
 describe("tawafRules, hints off", () => {
   const counted = (n: number) => laps(toLine(begin(false)), n);
 
@@ -292,8 +345,9 @@ describe("tawafRules, hints off", () => {
     const s = pressDone(begin(false));
     expect(hudView(s)).toEqual({ phase: "before-line", lineOffScreen: null });
     expect(hudView(pressDone(laps(toLine(s), 7)))).toEqual({
-      phase: "done",
-      mistakes: [],
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: null,
     });
   });
 
@@ -301,17 +355,21 @@ describe("tawafRules, hints off", () => {
     expect(hudView(counted(7))).toEqual({ phase: "round", round: 8 });
   });
 
-  it("ends the tawaf at Done after seven rounds", () => {
-    expect(hudView(pressDone(counted(7)))).toEqual({
-      phase: "done",
-      mistakes: [],
+  it("ends the rounds at Done after seven", () => {
+    const s = pressDone(counted(7));
+    expect(hudView(s)).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: null,
     });
+    expect(s.mistakes).toEqual([]);
   });
 
   it("counts only whole rounds at Done", () => {
     expect(hudView(pressDone(walk(counted(7), Math.PI)))).toEqual({
-      phase: "done",
-      mistakes: [],
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: null,
     });
   });
 
@@ -321,17 +379,17 @@ describe("tawafRules, hints off", () => {
     s = pressDone(s);
     s = laps(s, 1);
     expect(hudView(s)).toEqual({ phase: "round", round: 8 });
-    expect(hudView(pressDone(s))).toEqual({
-      phase: "done",
-      mistakes: [{ kind: "early", counted: 6 }],
-    });
+    expect(pressDone(s).mistakes).toEqual([{ kind: "early", counted: 6 }]);
   });
 
-  it("ends the tawaf at Done after eight rounds, and lists the extra round", () => {
-    expect(hudView(pressDone(counted(8)))).toEqual({
-      phase: "done",
-      mistakes: [{ kind: "over", walked: 8 }],
+  it("ends the rounds at Done after eight, and lists the extra round", () => {
+    const s = pressDone(counted(8));
+    expect(hudView(s)).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: 8,
     });
+    expect(s.mistakes).toEqual([{ kind: "over", walked: 8 }]);
   });
 
   it("shows round 4 when hints come on after three rounds", () => {
@@ -342,10 +400,13 @@ describe("tawafRules, hints off", () => {
     });
   });
 
-  it("ends the tawaf when hints come on after eight rounds", () => {
-    expect(hudView(setHints(counted(8), true))).toEqual({
-      phase: "done",
-      mistakes: [{ kind: "over", walked: 8 }],
+  it("ends the rounds when hints come on after eight", () => {
+    const s = setHints(counted(8), true);
+    expect(hudView(s)).toEqual({
+      phase: "to-maqam",
+      spotOffScreen: null,
+      over: 8,
     });
+    expect(s.mistakes).toEqual([{ kind: "over", walked: 8 }]);
   });
 });
