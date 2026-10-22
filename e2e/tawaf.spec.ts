@@ -309,3 +309,29 @@ test("the edge arrow shows while the line is out of sight, and turns the pilgrim
   await arrow.click();
   await expect(arrow).toHaveCount(0);
 });
+
+test("the arrow keys walk the pilgrim, but not while the menu is open", async ({
+  page,
+}) => {
+  await openTawaf(page);
+  const position = () => page.evaluate(() => window.vh!.position());
+  const holdUp = async () => {
+    await page.keyboard.down("ArrowUp");
+    await page.waitForTimeout(400);
+    await page.keyboard.up("ArrowUp");
+  };
+
+  // The pilgrim starts facing along the tawaf, so Up walks it anticlockwise: its angle round the Kaabah goes up.
+  const angle = async () => {
+    const { x, z } = await position();
+    return Math.atan2(-z, x);
+  };
+  const start = await angle();
+  await holdUp();
+  await expect.poll(angle).toBeGreaterThan(start + 0.1);
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  const paused = await position();
+  await holdUp();
+  expect(await position()).toEqual(paused);
+});
