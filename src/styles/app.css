@@ -524,13 +524,30 @@ body {
     margin-left: calc(var(--vh-space-16) * -4.5);
   }
 }
+.scrim.leaving {
+  animation: fade-out var(--vh-dur-panel) var(--vh-ease-leave) both;
+}
+.sheet.leaving {
+  animation: sheet-out var(--vh-dur-panel) var(--vh-ease-leave) both;
+}
 @keyframes fade-in {
   from {
     opacity: 0;
   }
 }
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
 @keyframes sheet-in {
   from {
+    opacity: 0;
+    transform: translateY(var(--vh-move));
+  }
+}
+@keyframes sheet-out {
+  to {
     opacity: 0;
     transform: translateY(var(--vh-move));
   }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { copy, type Copy, type Lang } from "../copy";
 import { HintsSwitch } from "../ui/HintsSwitch";
 import { Icon } from "../ui/Icon";
@@ -25,10 +26,23 @@ export interface TawafHudProps {
   onReload: () => void;
 }
 
+// Keeps a sheet's last content on screen while it leaves.
+function useLeaving<T>(value: T | null) {
+  const [kept, setKept] = useState(value);
+  if (value !== null && value !== kept) setKept(value);
+  return {
+    shown: value ?? kept,
+    leaving: value === null && kept !== null,
+    onGone: () => setKept(null),
+  };
+}
+
 // The walking HUD for /tawaf: top bar, top card, corner controls, and the two sheets.
 export function TawafHud(props: TawafHudProps) {
   const { view, hints, lang } = props;
   const t = copy[lang];
+  const menu = useLeaving(props.menuOpen ? true : null);
+  const done = useLeaving(view.phase === "done" ? view.mistakes : null);
 
   if (view.phase === "loading")
     return <TopCard name={t.tawaf} say={<span>{t.loading}</span>} />;
@@ -93,10 +107,23 @@ export function TawafHud(props: TawafHudProps) {
           {view.lineOffScreen === "right" && <Icon name="arrow-right" />}
         </button>
       )}
-      {view.phase === "done" && (
-        <DoneSheet mistakes={view.mistakes} t={t} {...props} />
+      {done.shown && (
+        <DoneSheet
+          mistakes={done.shown}
+          leaving={done.leaving}
+          onGone={done.onGone}
+          t={t}
+          {...props}
+        />
       )}
-      {props.menuOpen && <MenuSheet {...props} t={t} />}
+      {menu.shown && (
+        <MenuSheet
+          leaving={menu.leaving}
+          onGone={menu.onGone}
+          t={t}
+          {...props}
+        />
+      )}
     </>
   );
 }
@@ -176,14 +203,22 @@ function mistakeLine(m: Mistake, t: Copy) {
   }
 }
 
+interface SheetPart {
+  leaving: boolean;
+  onGone: () => void;
+  t: Copy;
+}
+
 function DoneSheet({
   mistakes,
+  leaving,
+  onGone,
   t,
   onStartAgain,
   onBack,
-}: { mistakes: Mistake[]; t: Copy } & TawafHudProps) {
+}: { mistakes: Mistake[] } & SheetPart & TawafHudProps) {
   return (
-    <Sheet titleId="done-title">
+    <Sheet titleId="done-title" leaving={leaving} onGone={onGone}>
       <h2 className="sheet-title" id="done-title">
         <Icon name="check" />
         <span>{t.doneTitle}</span>
@@ -211,14 +246,24 @@ function DoneSheet({
   );
 }
 
-function MenuSheet({ t, ...props }: { t: Copy } & TawafHudProps) {
+function MenuSheet({
+  leaving,
+  onGone,
+  t,
+  ...props
+}: SheetPart & TawafHudProps) {
   const { view, hints } = props;
   const sub =
     hints && (view.phase === "round" || view.phase === "void")
       ? `${t.roundOf(view.round)} · ${t.paused}`
       : t.paused;
   return (
-    <Sheet titleId="menu-title">
+    <Sheet
+      titleId="menu-title"
+      leaving={leaving}
+      onGone={onGone}
+      onClose={() => props.onMenu(false)}
+    >
       <div className="sheet-head">
         <div>
           <h2 className="sheet-title" id="menu-title">

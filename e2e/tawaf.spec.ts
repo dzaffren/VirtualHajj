@@ -116,3 +116,14 @@ test("counts with hints off", async ({ page }) => {
   await expect(sheet).toContainText("Tawaf done. Seven rounds.");
   await expect(sheet).toContainText("You pressed Done after six rounds.");
 });
+
+test("the menu takes focus, and Escape gives it back", async ({ page }) => {
+  await openTawaf(page);
+  const menuButton = page.getByRole("button", { name: "Menu" });
+  await menuButton.click();
+  const menu = page.getByRole("dialog");
+  await expect(menu.getByRole("button", { name: "Close menu" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(menuButton).toBeFocused();
+});
