@@ -20,7 +20,6 @@ export type HudView =
   | { phase: "short"; counted: number }
   | {
       phase: "to-maqam";
-      atLine: boolean;
       spotOffScreen: Side;
       over: number | null;
     }

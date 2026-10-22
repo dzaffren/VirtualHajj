@@ -238,11 +238,7 @@ function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
       break;
     case "to-maqam":
       if (!hints) return null;
-      [lead, say, note] = [
-        t.roundsDone,
-        t.toMaqamSay,
-        view.atLine ? t.toMaqamLineNote : t.toMaqamNote,
-      ];
+      [lead, say, note] = [t.roundsDone, t.toMaqamSay, t.toMaqamNote];
       break;
     case "void":
       mistake = true;
@@ -261,14 +257,7 @@ function Card({ view, hints, t }: { view: HudView; hints: boolean; t: Copy }) {
     default:
       return null;
   }
-  const part =
-    "kind" in view
-      ? view.kind
-      : "part" in view
-        ? view.part
-        : "atLine" in view
-          ? view.atLine
-          : "";
+  const part = "kind" in view ? view.kind : "part" in view ? view.part : "";
   const step = `${view.phase}-${counted}-${part}`;
   return (
     <section

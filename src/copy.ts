@@ -134,18 +134,18 @@ export const copy = {
     istilamBody:
       "Every round starts and ends here. Face the Hajar Aswad, raise your right hand towards it, and say:",
     istilamMeaning: "In the name of Allah, and Allah is the Greatest.",
-    istilamThen: "Then turn so the Kaabah is on your left, and start round 1.",
+    istilamThen:
+      "Then kiss your right hand, turn so the Kaabah is on your left, and start round 1.",
     startRound1: "Start round 1",
     showMeHow: "Show me how",
     istilamSay: "Raise your right hand to the Hajar Aswad.",
-    istilamNote: `Say “${istilamWords}”. Then walk on, with the Kaabah on your left.`,
+    istilamNote: `Say “${istilamWords}”, and kiss your hand. Then walk on, with the Kaabah on your left.`,
     doaSay: "Say this doa as you walk.",
     rabbanaMeaning:
       "Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
 
     roundsDone: "Seven rounds done",
     toMaqamSay: "Walk to the glowing spot behind the Maqam Ibrahim.",
-    toMaqamLineNote: `First raise your right hand to the Hajar Aswad, and say “${istilamWords}”.`,
     toMaqamNote: "Pray two rakaat there, facing the Kaabah.",
     maqamName: "Maqam Ibrahim",
     turnToMaqam: "Turn to the Maqam Ibrahim",
@@ -248,18 +248,17 @@ export const copy = {
       "Setiap pusingan bermula dan tamat di sini. Hadap Hajar Aswad, angkat tangan kanan ke arahnya, dan sebut:",
     istilamMeaning: "Dengan nama Allah, dan Allah Maha Besar.",
     istilamThen:
-      "Kemudian pusing supaya Kaabah di sebelah kiri anda, dan mulakan pusingan 1.",
+      "Kemudian kucup tangan kanan anda, pusing supaya Kaabah di sebelah kiri anda, dan mulakan pusingan 1.",
     startRound1: "Mula pusingan 1",
     showMeHow: "Tunjukkan cara",
     istilamSay: "Angkat tangan kanan ke arah Hajar Aswad.",
-    istilamNote: `Sebut “${istilamWords}”. Kemudian teruskan, dengan Kaabah di sebelah kiri anda.`,
+    istilamNote: `Sebut “${istilamWords}”, dan kucup tangan anda. Kemudian teruskan, dengan Kaabah di sebelah kiri anda.`,
     doaSay: "Baca doa ini sambil berjalan.",
     rabbanaMeaning:
       "Wahai Tuhan kami, berilah kami kebaikan di dunia dan kebaikan di akhirat, dan peliharalah kami daripada azab neraka.",
 
     roundsDone: "Tujuh pusingan selesai",
     toMaqamSay: "Berjalan ke tempat yang bercahaya di belakang Maqam Ibrahim.",
-    toMaqamLineNote: `Mula-mula angkat tangan kanan ke arah Hajar Aswad, dan sebut “${istilamWords}”.`,
     toMaqamNote: "Solat dua rakaat di situ, menghadap Kaabah.",
     maqamName: "Maqam Ibrahim",
     turnToMaqam: "Pusing ke Maqam Ibrahim",
