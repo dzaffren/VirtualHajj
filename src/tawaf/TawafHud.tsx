@@ -69,44 +69,47 @@ export function TawafHud(props: TawafHudProps) {
   const walking = view.phase !== "done";
   return (
     <>
-      <div className="top-bar">
-        <HintsSwitch
-          label={t.hints}
-          on={hints}
-          onWord={t.on}
-          offWord={t.off}
-          onChange={props.onHints}
-        />
-        <IconButton
-          icon="menu"
-          label={t.menu}
-          onClick={() => props.onMenu(true)}
-        />
-      </div>
-      <Card view={view} hints={hints} t={t} />
-      {walking && hints && view.phase !== "short" && (
-        <p className="caption-chip corner corner-left">
-          <span className="hint-touch">{t.walkTouch}</span>
-          <span className="hint-mouse">{t.walkMouse}</span>
-        </p>
-      )}
-      {walking && !hints && (
-        <div className="corner corner-right">
-          <PrimaryButton onClick={props.onDone}>{t.done}</PrimaryButton>
+      {/* While a sheet is open, the controls behind its scrim take no focus or clicks. */}
+      <div inert={Boolean(done.shown || menu.shown)}>
+        <div className="top-bar">
+          <HintsSwitch
+            label={t.hints}
+            on={hints}
+            onWord={t.on}
+            offWord={t.off}
+            onChange={props.onHints}
+          />
+          <IconButton
+            icon="menu"
+            label={t.menu}
+            onClick={() => props.onMenu(true)}
+          />
         </div>
-      )}
-      {hints && view.phase === "before-line" && view.lineOffScreen && (
-        <button
-          type="button"
-          className={`edge-arrow edge-${view.lineOffScreen}`}
-          aria-label={t.turnToLine}
-          onClick={props.onTurnToLine}
-        >
-          {view.lineOffScreen === "left" && <Icon name="arrow-left" />}
-          <span>{t.lineName}</span>
-          {view.lineOffScreen === "right" && <Icon name="arrow-right" />}
-        </button>
-      )}
+        <Card view={view} hints={hints} t={t} />
+        {walking && hints && view.phase !== "short" && (
+          <p className="caption-chip corner corner-left">
+            <span className="hint-touch">{t.walkTouch}</span>
+            <span className="hint-mouse">{t.walkMouse}</span>
+          </p>
+        )}
+        {walking && !hints && (
+          <div className="corner corner-right">
+            <PrimaryButton onClick={props.onDone}>{t.done}</PrimaryButton>
+          </div>
+        )}
+        {hints && view.phase === "before-line" && view.lineOffScreen && (
+          <button
+            type="button"
+            className={`edge-arrow edge-${view.lineOffScreen}`}
+            aria-label={t.turnToLine}
+            onClick={props.onTurnToLine}
+          >
+            {view.lineOffScreen === "left" && <Icon name="arrow-left" />}
+            <span>{t.lineName}</span>
+            {view.lineOffScreen === "right" && <Icon name="arrow-right" />}
+          </button>
+        )}
+      </div>
       {done.shown && (
         <DoneSheet
           mistakes={done.shown}

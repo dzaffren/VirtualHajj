@@ -236,3 +236,24 @@ test("hints on in the menu after seven rounds shows only the done sheet", async 
   await expect(sheet).toContainText("Tawaf done. Seven rounds.");
   await expect(sheet.getByRole("button", { name: "Walk again" })).toBeFocused();
 });
+
+test("an open sheet keeps focus from the controls behind it", async ({
+  page,
+}) => {
+  await openTawaf(page);
+  await page.getByRole("switch", { name: /Hints/ }).click();
+  await page.getByRole("button", { name: "Menu" }).click();
+  await expect(
+    page.getByRole("dialog").getByRole("button", { name: "Close menu" }),
+  ).toBeFocused();
+
+  for (const key of ["Shift+Tab", "Tab", "Tab"]) {
+    await page.keyboard.press(key);
+    const behind = await page.evaluate(
+      () =>
+        document.activeElement !== document.body &&
+        !document.activeElement?.closest("[role=dialog]"),
+    );
+    expect(behind, `focus after ${key}`).toBe(false);
+  }
+});
