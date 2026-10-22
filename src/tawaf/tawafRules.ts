@@ -13,6 +13,8 @@ export interface TawafState {
   furthest: number;
   // A mistake voids the round until the next crossing.
   void: MistakeKind | null;
+  // Done pressed under seven, with hints off: named until the next crossing.
+  short: boolean;
   counted: number;
   mistakes: Mistake[];
   done: boolean;
@@ -31,6 +33,7 @@ export function start(x: number, z: number, hints: boolean): TawafState {
     start: 0,
     furthest: 0,
     void: null,
+    short: false,
     counted: 0,
     mistakes: [],
     done: false,
@@ -45,6 +48,7 @@ export function move(s: TawafState, x: number, z: number): TawafState {
   const k = crossings(angle);
   let next = { ...s, angle };
   if (k > crossings(s.angle)) {
+    next.short = false;
     if (!s.started || s.void)
       next = { ...next, started: true, start: k, furthest: angle, void: null };
     else if (k === s.start + 1) {
@@ -64,12 +68,33 @@ export function move(s: TawafState, x: number, z: number): TawafState {
   return { ...next, void: kind, mistakes: [...next.mistakes, mistake] };
 }
 
+// Done counts the rounds already complete. Only seven is right (D33).
+export function pressDone(s: TawafState): TawafState {
+  if (s.done || s.short) return s;
+  if (s.counted < 7)
+    return {
+      ...s,
+      short: true,
+      mistakes: [...s.mistakes, { kind: "early", counted: s.counted }],
+    };
+  const over: Mistake[] =
+    s.counted > 7 ? [{ kind: "over", walked: s.counted }] : [];
+  return { ...s, done: true, mistakes: [...s.mistakes, ...over] };
+}
+
+// Hints switch at any time. Hints on with seven or more counted ends the tawaf, as Done does.
+export function setHints(s: TawafState, on: boolean): TawafState {
+  const next = { ...s, hints: on };
+  return on && s.counted >= 7 ? pressDone(next) : next;
+}
+
 export function hudView(
   s: TawafState,
   lineOffScreen: "left" | "right" | null = null,
 ): HudView {
   if (s.done) return { phase: "done", mistakes: s.mistakes };
   if (!s.started) return { phase: "before-line", lineOffScreen };
+  if (s.short) return { phase: "short", counted: s.counted };
   if (s.void) return { phase: "void", round: s.counted + 1, kind: s.void };
   return { phase: "round", round: s.counted + 1 };
 }

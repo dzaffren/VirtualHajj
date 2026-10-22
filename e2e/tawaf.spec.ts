@@ -86,3 +86,33 @@ test("names the wrong way and the Hijr Ismail", async ({ page }) => {
     "Round 3: you walked inside the Hijr Ismail.",
   );
 });
+
+test("counts with hints off", async ({ page }) => {
+  await openTawaf(page);
+  await page.getByRole("switch", { name: /Hints/ }).click();
+  await openTawaf(page);
+
+  // Hints stay off after a reload: no top card, and a Done button.
+  await expect(page.getByRole("switch", { name: /Hints/ })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+  await expect(page.locator(".card")).toHaveCount(0);
+  const done = page.getByRole("button", { name: "Done" });
+  await expect(done).toBeVisible();
+
+  await walkToLine(page);
+  await walkLaps(page, 6);
+  await done.click();
+  const card = page.locator(".card");
+  await expect(card).toContainText("Not done yet");
+  await expect(card).toContainText("Six rounds count. Tawaf has seven.");
+  await expect(card).toContainText("Walk one more round, then press Done.");
+
+  await walkLaps(page, 1);
+  await expect(card).toHaveCount(0);
+  await done.click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toContainText("Tawaf done. Seven rounds.");
+  await expect(sheet).toContainText("You pressed Done after six rounds.");
+});

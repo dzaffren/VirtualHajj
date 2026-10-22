@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { lineAngle, onCircle } from "../scene/mataf";
-import { hudView, move, start, type TawafState } from "./tawafRules";
+import {
+  hudView,
+  move,
+  pressDone,
+  setHints,
+  start,
+  type TawafState,
+} from "./tawafRules";
 
 const r = 16;
 const lap = 2 * Math.PI;
@@ -136,5 +143,60 @@ describe("tawafRules, mistakes", () => {
     let s = walkStraight(start(p.x, p.z, true), 0, -9);
     s = walk(s, -metres(5));
     expect(hudView(s)).toEqual({ phase: "before-line", lineOffScreen: null });
+  });
+});
+
+describe("tawafRules, hints off", () => {
+  const counted = (n: number) => laps(toLine(begin(false)), n);
+
+  it("does not end the tawaf at seven rounds", () => {
+    expect(hudView(counted(7))).toEqual({ phase: "round", round: 8 });
+  });
+
+  it("ends the tawaf at Done after seven rounds", () => {
+    expect(hudView(pressDone(counted(7)))).toEqual({
+      phase: "done",
+      mistakes: [],
+    });
+  });
+
+  it("counts only whole rounds at Done", () => {
+    expect(hudView(pressDone(walk(counted(7), Math.PI)))).toEqual({
+      phase: "done",
+      mistakes: [],
+    });
+  });
+
+  it("names Done after six rounds, walks on, and lists it", () => {
+    let s = pressDone(counted(6));
+    expect(hudView(s)).toEqual({ phase: "short", counted: 6 });
+    s = pressDone(s);
+    s = laps(s, 1);
+    expect(hudView(s)).toEqual({ phase: "round", round: 8 });
+    expect(hudView(pressDone(s))).toEqual({
+      phase: "done",
+      mistakes: [{ kind: "early", counted: 6 }],
+    });
+  });
+
+  it("ends the tawaf at Done after eight rounds, and lists the extra round", () => {
+    expect(hudView(pressDone(counted(8)))).toEqual({
+      phase: "done",
+      mistakes: [{ kind: "over", walked: 8 }],
+    });
+  });
+
+  it("shows round 4 when hints come on after three rounds", () => {
+    expect(hudView(setHints(counted(3), true))).toEqual({
+      phase: "round",
+      round: 4,
+    });
+  });
+
+  it("ends the tawaf when hints come on after eight rounds", () => {
+    expect(hudView(setHints(counted(8), true))).toEqual({
+      phase: "done",
+      mistakes: [{ kind: "over", walked: 8 }],
+    });
   });
 });

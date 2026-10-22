@@ -13,10 +13,17 @@ import {
 import type { PilgrimPose } from "../scene/Pilgrim";
 import { TawafScene } from "../scene/TawafScene";
 import type { Keys, Point } from "../scene/walk";
+import { useHints } from "../settings";
 import { viewerState, type ViewerState } from "../viewer/viewerState";
 import type { HudView } from "./hudView";
 import { TawafHud } from "./TawafHud";
-import { hudView, start, type TawafState } from "./tawafRules";
+import {
+  hudView,
+  pressDone,
+  setHints,
+  start,
+  type TawafState,
+} from "./tawafRules";
 import { Walker } from "./Walker";
 
 // The pilgrim starts 16 m out and 8 m before the Hajar Aswad line, facing along the tawaf.
@@ -43,7 +50,7 @@ export function App() {
       hasWebGL2() ? initial : viewerState(initial, "no-webgl"),
   );
   const lang: Lang = "en";
-  const [hints, setHintsOn] = useState(true);
+  const [hints, saveHints] = useHints();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // The walk lives in refs, so React renders only when the HUD's view changes.
@@ -112,6 +119,17 @@ export function App() {
     show();
   };
 
+  const onHints = (on: boolean) => {
+    saveHints(on);
+    tawaf.current = setHints(tawaf.current, on);
+    show();
+  };
+
+  const onDone = () => {
+    tawaf.current = pressDone(tawaf.current);
+    show();
+  };
+
   const turnToLine = () => {
     const { x, z } = pose.current;
     const p = onLine(x, z);
@@ -158,10 +176,10 @@ export function App() {
         hints={hints}
         lang={lang}
         menuOpen={menuOpen}
-        onHints={setHintsOn}
+        onHints={onHints}
         onLang={() => {}}
         onMenu={setMenuOpen}
-        onDone={() => {}}
+        onDone={onDone}
         onStartAgain={startAgain}
         onBack={() => location.assign("/")}
         onTurnToLine={turnToLine}
