@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { lineAngle } from "../src/scene/mataf";
 import {
   openTawaf,
   past,
@@ -37,7 +38,11 @@ test("walks seven rounds with hints on", async ({ page }) => {
   const done = page.getByRole("dialog");
   await expect(done).toContainText("Tawaf done. Seven rounds.");
   await expect(done).toContainText("No mistakes on the way.");
-  await expect(done.getByRole("button", { name: "Walk again" })).toBeVisible();
+  await done.getByRole("button", { name: "Walk again" }).click();
+  await expect(done).toHaveCount(0);
+  await expect(page.getByText("Before you start")).toBeVisible();
+  await walkToLine(page);
+  await expect(page.getByText("Round 1 of 7")).toBeVisible();
 });
 
 test("a click on the floor walks the pilgrim there", async ({ page }) => {
@@ -268,4 +273,39 @@ test.describe("with reduced motion", () => {
       "0s",
     );
   });
+});
+
+test("the menu starts the tawaf again, and goes back to the Kaabah view", async ({
+  page,
+}) => {
+  await openTawaf(page);
+  await walkToLine(page);
+  await expect(page.getByText("Round 1 of 7")).toBeVisible();
+
+  const menuButton = page.getByRole("button", { name: "Menu" });
+  await menuButton.click();
+  await page.getByRole("button", { name: "Start tawaf again" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("Before you start")).toBeVisible();
+
+  await menuButton.click();
+  await page.getByRole("button", { name: "Back to the Kaabah view" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByText("Drag to look round the Kaabah.")).toBeVisible();
+});
+
+test("the edge arrow shows while the line is out of sight, and turns the pilgrim to it", async ({
+  page,
+}) => {
+  await openTawaf(page);
+  const arrow = page.getByRole("button", {
+    name: "Turn to the Hajar Aswad line",
+  });
+  await expect(arrow).toHaveCount(0);
+
+  // Clockwise away from the line, before round 1, so the camera faces away from it.
+  await walkArc(page, lineAngle - 0.5, lineAngle - 2.4);
+  await expect(arrow).toBeVisible();
+  await arrow.click();
+  await expect(arrow).toHaveCount(0);
 });
