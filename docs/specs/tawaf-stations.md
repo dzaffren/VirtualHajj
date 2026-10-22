@@ -1,6 +1,6 @@
 # tawaf-stations
 
-**Version:** v1 · **Status:** Refined · **Type:** Feature · **Project type:** Web UI
+**Version:** v1 · **Status:** Built · **Type:** Feature · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** tawaf
@@ -352,8 +352,8 @@ No new data crosses a trust boundary. The two `localStorage` keys and the `?e2e=
 | `prayed`      | `true` or `false` on the done view    | `finish(s)`: `done: true`, `prayed: s.rakaat`                                                                                                                                                                                                                                 |
 
 - After the rounds, `move` stops the direction and Hijr Ismail checks. A crossing of the line counts nothing more.
-- `hudView(s, offScreen)` gives `before-line` with `lineOffScreen`, `istilam` with `demo`, and `round` with its `part`. It also gives `to-maqam` with `spotOffScreen` and `over`, then `rakaat`, then `done` with `prayed`.
-- The part is set by the offset past the line, `(angle − lineAngle) mod 2π`. The part is `istilam` below the Rukun Iraqi's offset, for any round start but the first. It is `doa` above the Rukun Yamani's offset. Otherwise it is `walk`.
+- `hudView(s, offScreen, demo)` gives `before-line` with `lineOffScreen`, `istilam` with `demo`, and `round` with its `part`. It also gives `to-maqam` with `spotOffScreen` and `over`, then `rakaat`, then `done` with `prayed`.
+- The part is set by the offset past the line where the round started, `angle − lineAngle − 2π × start`. A step back over the line then does not show the doa. The part is `istilam` below the Rukun Iraqi's offset, for any round start but the first. It is `doa` above the Rukun Yamani's offset. Otherwise it is `walk`.
 - `setHints(s, true)` with 7 or more counted ends the rounds through `pressDone`, as now. The menu stays open, because no sheet takes its place. The `tawaf` fix `cf3f62a` closed the menu only to make room for the done sheet.
 
 ### Changes
@@ -462,6 +462,8 @@ Recorded as D45, D46, D47, D48, D49, D50.
 | O17 | Shafi'i books say a pilgrim who can't touch the Hajar Aswad points at it, then kisses the hand. Does the Tabung Haji book teach the kiss? The sheet now says only to raise the hand. | question | spec p2   | user  | Resolved      | Add the kiss. The sheet says to kiss the right hand, and the reminder says to kiss the hand. Shafi\'i sources teach it: al-Bujairimi, quoted by NU Online, and Zakariyya al-Ansari, quoted by Dr Zulkifli Mohamad al-Bakri. Show me how still shows only the raised hand. D45. 2026-10-22 |
 | O18 | D40 rejected a camera straight behind the figure. The pause 2 camera goes straight behind when the pilgrim faces the Kaabah at a station. Supersede D40?                             | question | spec p3   | user  | Resolved      | Supersede it with D50: the camera turns towards the Kaabah, and no further than the Kaabah is. 2026-10-22                                                                                                                                                                                 |
 | O19 | The Maqam Ibrahim adds about 460 triangles to `/tawaf` and `/perf`. Run `/perf` on the Galaxy A35 for this slice?                                                                    | flag     | spec p3   | user  | Accepted risk | Skip the run. The Maqam is 0.2% of the 200,000 triangles that `/perf` draws, and tawaf O37 already carries the unrun A35 check. The risk: `/tawaf` may hold under 30 FPS on the A35 (D22). To check, run `/perf` on production for 5 minutes. 2026-10-22                                  |
+| O20 | Rules, as code, said "The part is set by the offset past the line, `(angle − lineAngle) mod 2π`." With that formula, a step back over the line at the start of a round shows the doa for a moment. | flag | build | user | Decided alone | Chose: count the offset from the line where the round started, so a step back reads as the start of the round. Other: the `mod 2π` offset, as written. Undo: in `part` in `src/tawaf/tawafRules.ts`, wrap the offset with `mod 2π`. 2026-10-22 |
+| O21 | The plan did not say what happens when the menu opens over the istilam sheet. The station sheets sat outside the `inert` wrapper, so Tab could leave the modal menu for Start round 1 or Show me how. | flag | build | user | Decided alone | Chose: put the station sheets inside the wrapper, so they take no focus or clicks while the menu or done sheet shows. Other: leave them reachable. Undo: in `src/tawaf/TawafHud.tsx`, move the two `StationSheet` blocks out of the `inert` div. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
