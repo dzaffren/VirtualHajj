@@ -114,9 +114,11 @@ export function App() {
     show();
   };
 
+  // Hints on with seven or more counted ends the tawaf, so the menu gives way to the done sheet.
   const onHints = (on: boolean) => {
     saveHints(on);
     tawaf.current = setHints(tawaf.current, on);
+    if (tawaf.current.done) setMenuOpen(false);
     show();
   };
 

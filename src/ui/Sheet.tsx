@@ -9,7 +9,7 @@ interface SheetProps {
 }
 
 // The system's bottom sheet over a scrim, for the menu and the done card.
-// Focus moves into it when it opens, and goes back where it was when it closes. Escape closes it, if it can close.
+// Focus moves into it when it opens, and goes back where it was when it closes, unless another sheet has it. Escape closes it, if it can close.
 export function Sheet({
   titleId,
   leaving,
@@ -20,9 +20,14 @@ export function Sheet({
   const sheet = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const el = sheet.current;
     const before = document.activeElement as HTMLElement | null;
-    sheet.current?.querySelector<HTMLElement>("button")?.focus();
-    return () => before?.focus();
+    el?.querySelector<HTMLElement>("button")?.focus();
+    return () => {
+      // Another sheet may have taken focus while this one left.
+      const now = document.activeElement;
+      if (now === document.body || el?.contains(now)) before?.focus();
+    };
   }, []);
 
   useEffect(() => {

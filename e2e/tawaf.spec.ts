@@ -220,3 +220,19 @@ test.describe("on a Malay browser with no WebGL 2", () => {
     await saysSo(page);
   });
 });
+
+test("hints on in the menu after seven rounds shows only the done sheet", async ({
+  page,
+}) => {
+  await openTawaf(page);
+  await page.getByRole("switch", { name: /Hints/ }).click();
+  await walkToLine(page);
+  await walkLaps(page, 7);
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("dialog").getByRole("switch").click();
+
+  const sheet = page.getByRole("dialog");
+  await expect(sheet).toHaveCount(1);
+  await expect(sheet).toContainText("Tawaf done. Seven rounds.");
+  await expect(sheet.getByRole("button", { name: "Walk again" })).toBeFocused();
+});
