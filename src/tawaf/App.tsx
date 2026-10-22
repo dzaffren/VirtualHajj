@@ -4,12 +4,7 @@ import { copy } from "../copy";
 import { canvasConfig } from "../scene/canvasConfig";
 import { FirstFrame } from "../scene/FirstFrame";
 import { hasWebGL2 } from "../scene/hasWebGL2";
-import {
-  facingAnticlockwise,
-  lineAngle,
-  onCircle,
-  onLine,
-} from "../scene/mataf";
+import { facingAnticlockwise, lineAngle, onCircle } from "../scene/mataf";
 import type { PilgrimPose } from "../scene/Pilgrim";
 import { TawafScene } from "../scene/TawafScene";
 import type { Keys, Point } from "../scene/walk";
@@ -130,11 +125,14 @@ export function App() {
     show();
   };
 
+  // The edge arrow turns the pilgrim the way tawaf walks to the line: anticlockwise, with the Kaabah on the left.
   const turnToLine = () => {
     const { x, z } = pose.current;
-    const p = onLine(x, z);
     target.current = null;
-    pose.current = { ...pose.current, facing: Math.atan2(p.x - x, p.z - z) };
+    pose.current = {
+      ...pose.current,
+      facing: facingAnticlockwise(Math.atan2(-z, x)),
+    };
   };
 
   return (

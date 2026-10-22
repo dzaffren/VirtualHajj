@@ -1,7 +1,13 @@
 import { useFrame, type RootState } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Vector3 } from "three";
-import { onLine } from "../scene/mataf";
+import {
+  hajarAswad,
+  lineAngle,
+  lineLength,
+  onCircle,
+  onLine,
+} from "../scene/mataf";
 import type { PilgrimPose } from "../scene/Pilgrim";
 import { step, type Keys, type Point } from "../scene/walk";
 import { move, type TawafState } from "./tawafRules";
@@ -62,14 +68,19 @@ export function Walker({
     };
   }, [onTap, pose]);
 
-  // Before round 1, which side of the screen the line is off, if the camera can't see it.
+  // Before round 1: null while the camera sees any of the line, else the side it is off, by the point as far out as the pilgrim.
   const lineSide = ({ camera }: RootState, x: number, z: number) => {
+    const corner = Math.hypot(hajarAswad.x, hajarAswad.z);
+    for (let i = 0; i <= 4; i++) {
+      const p = onCircle(corner + (lineLength * i) / 4, lineAngle);
+      spot.set(p.x, 0, p.z).applyMatrix4(camera.matrixWorldInverse);
+      if (spot.z >= 0) continue;
+      spot.applyMatrix4(camera.projectionMatrix);
+      if (Math.abs(spot.x) <= 1 && Math.abs(spot.y) <= 1) return null;
+    }
     const p = onLine(x, z);
-    const local = spot.set(p.x, 0, p.z).applyMatrix4(camera.matrixWorldInverse);
-    const ahead = local.z < 0;
-    const across = local.clone().applyMatrix4(camera.projectionMatrix).x;
-    if (ahead && Math.abs(across) <= 1) return null;
-    return local.x < 0 ? "left" : "right";
+    spot.set(p.x, 0, p.z).applyMatrix4(camera.matrixWorldInverse);
+    return spot.x < 0 ? "left" : "right";
   };
 
   // The hook's walk ends on arrival, at a wall, or when the walk pauses for a sheet.
