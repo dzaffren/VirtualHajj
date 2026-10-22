@@ -378,6 +378,13 @@ test("hints on in the menu after seven rounds leads to the Maqam Ibrahim", async
   await expect(card).toContainText(
     "Walk to the glowing spot behind the Maqam Ibrahim.",
   );
+
+  // Clockwise away from the spot, the edge arrow shows, and turns the pilgrim to it.
+  const arrow = page.getByRole("button", { name: "Turn to the Maqam Ibrahim" });
+  await walkArc(page, past, past - 2);
+  await expect(arrow).toBeVisible();
+  await arrow.click();
+  await expect(arrow).toHaveCount(0);
 });
 
 test("an open sheet keeps focus from the controls behind it", async ({
