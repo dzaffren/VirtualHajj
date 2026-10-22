@@ -1,6 +1,6 @@
 # walking-skeleton
 
-**Version:** v1 · **Status:** Refined · **Type:** Skeleton · **Project type:** Web UI
+**Version:** v1 · **Status:** Shipped · **Type:** Skeleton · **Project type:** Web UI
 
 **Shape doc:** docs/specs/virtual-hajj/shape.md
 **Depends on:** None
@@ -86,7 +86,7 @@ Scenario: The stress page holds 30 FPS on a Galaxy A35 for 5 minutes
   But if the browser drops the 3D view during the run, the readout says "Stopped" and the run is a fail
 
 Scenario: Every push runs the checks and the e2e test on a preview URL
-  Given a developer pushes the branch walking-skeleton to the GitHub repo
+  Given a developer pushes the branch feat/walking-skeleton to the GitHub repo
   When GitHub Actions runs the workflow
   Then it installs with pnpm, type-checks, runs the Vitest tests, builds, and deploys a Cloudflare Pages preview
   And Playwright opens the preview URL, waits for the canvas, and checks the frame is not one flat colour
@@ -141,6 +141,7 @@ stateDiagram-v2
     [*] --> Loading: page opens
     Loading --> NoWebGL2: browser has no WebGL 2
     Loading --> Ready: first frame drawn
+    Loading --> Stopped: browser drops the 3D view
     Ready --> Stopped: browser drops the 3D view
     Stopped --> Loading: Reload
 ```
@@ -276,39 +277,41 @@ The page shows its loading card before any JavaScript runs. The app then checks 
 
 ### Changes
 
-Every file is new except the docs at the bottom. Versions are the current releases checked on 2026-10-21, pinned by the lockfile: three 0.186, @react-three/fiber 9.8, @react-three/drei 10.7, react and react-dom 19.3, vite 8.3, @vitejs/plugin-react 6.1, vitest 5.0, @playwright/test 1.64, typescript 6.0 (D28), typescript-eslint 8.72, wrangler 4.151, pngjs 7.0, pnpm 12.14, Node 24.
+Every file is new except `.gitignore` and the docs at the bottom. Versions are the current releases checked on 2026-10-21, pinned by the lockfile: three 0.186, @react-three/fiber 9.8, @react-three/drei 10.7, react and react-dom 19.3, vite 8.3, @vitejs/plugin-react 6.1, vitest 5.0, @playwright/test 1.64, typescript 6.0 (D28), typescript-eslint 8.72, wrangler 4.151, pngjs 7.0, pnpm 12.14, Node 24.
 
 | File | What changes | Why |
 | ---- | ------------ | --- |
-| `package.json` | Scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `test` (`vitest run`), `e2e` (`playwright test`), `lint`, `typecheck`, `format`. `packageManager: pnpm@12.14.0`, `engines.node: 24`. The dependencies above, and `pnpm.onlyBuiltDependencies` for any package whose install script pnpm blocks | D17–D21, D28 |
+| `package.json` | Scripts `dev`, `build` (`tsc -b && vite build`), `preview`, `test` (`vitest run`), `e2e` (`playwright test`), `lint`, `typecheck`, `format`. `packageManager: pnpm@12.14.0`, `engines.node: 24`. The dependencies above | D17–D21, D28 |
 | `pnpm-lock.yaml` | The lockfile | D20 |
+| `pnpm-workspace.yaml` | `allowBuilds` denies the esbuild and workerd install scripts, which pnpm blocks; neither is needed to build or deploy | D20 |
 | `.nvmrc` | `24` | CI and local use the same Node |
+| `.gitignore` | Ignores `node_modules/`, `dist/`, `*.tsbuildinfo`, the Playwright output and `.wrangler/` | Keeps build and test output out of git |
 | `tsconfig.json` | Strict; `src/`, `e2e/`, config files | Type-check step |
-| `vite.config.ts` | React plugin; `build.rollupOptions.input` with `index.html` and `perf/index.html` | Two pages |
+| `vite.config.ts` | React plugin; `appType: "mpa"`, so the local preview has no SPA fallback; `build.rolldownOptions.input` with `index.html` and `perf/index.html` | Two pages |
 | `eslint.config.js`, `.prettierrc` | typescript-eslint recommended rules; Prettier defaults | Scope |
-| `index.html` | The Loading card as plain markup inside `#root`, `<link>` to `src/styles/app.css`, `<title>VirtualHajj</title>` | Loading shows before the bundle arrives |
+| `index.html` | The Loading card as plain markup inside `#root`, `<link>` to `src/styles/app.css`, `<title>VirtualHajj</title>`. A plain script before the bundle swaps the card for the no-WebGL 2 message when the browser has no WebGL 2 or can't parse class static blocks, so a browser too old for the bundle never stays on Loading | Loading shows before the bundle arrives; scenario 5 |
 | `perf/index.html` | The same, with the "Stress test" card | `/perf` |
 | `src/styles/app.css` | `@import` of `../../docs/design/design-system/styles.css`, then the app's layout: backdrop, top card, primary button, focus ring. Ported from the preview's CSS | Interface |
 | `src/ui/TopCard.tsx` | The top card: name, instruction line, optional hint, body and action | Interface, D29 |
 | `src/ui/PrimaryButton.tsx` | The system's primary button | Scenario 5, D29 |
 | `src/scene/palette.ts` | The scene palette, day and night | D25 |
-| `src/scene/useColorScheme.ts`, `src/scene/useReducedMotion.ts` | `matchMedia` hooks that follow changes | Night scene, tier 1 rules |
-| `src/scene/canvasConfig.ts` | One Canvas setup: `dpr [1, 2]`, antialias on, camera fov 50, start position, `gl.setClearColor` | D22: `/perf` proves what `/` uses |
+| `src/scene/useMediaQuery.ts` | One `matchMedia` hook that follows changes, used for the light or dark setting and for reduced motion | Night scene, tier 1 rules |
+| `src/scene/canvasConfig.ts` | One Canvas setup: `dpr [1, 2]`, antialias on, no tone mapping (as the preview), camera fov 50, start position. The sky is the scene background | D22: `/perf` proves what `/` uses |
 | `src/scene/BaseScene.tsx` | Sky, hemisphere and sun lights, ground disc, the 11 × 13 × 12 m Kaabah with the kiswah `CanvasTexture`. Ported from the preview | Scenarios 1–3 |
 | `src/scene/OrbitCamera.tsx` | drei `OrbitControls`: no pan, 16–70 m, at least 5° above the ground, damping off with reduced motion; keyboard through `orbitStep` | Scenario 1 |
 | `src/scene/orbitStep.ts` + `.test.ts` | A pure function: camera position, target, key and limits in, new position out. Ported from the preview's `keyOrbit` | Scenario 1 |
 | `src/scene/hasWebGL2.ts` | `canvas.getContext('webgl2') !== null` | Scenario 5 |
 | `src/viewer/main.tsx`, `src/viewer/App.tsx` | Mounts the app. Sets `data-state` on the root. Listens for `webglcontextlost` on `gl.domElement` from `onCreated`. Reload calls `location.reload()` | Scenarios 1, 2, 5 |
-| `src/viewer/viewerState.ts` + `.test.ts` | A pure reducer: `loading → ready \| no-webgl`, `ready → stopped` | Scenario 5 |
+| `src/viewer/viewerState.ts` + `.test.ts` | A pure reducer: `loading → ready \| no-webgl`, `loading \| ready → stopped` | Scenario 5 |
 | `src/perf/main.tsx`, `src/perf/App.tsx` | The stress scene and its readout. Reads `gl.info.render` each second for Drawn | Scenario 3 |
-| `src/perf/meter.ts` + `.test.ts` | A pure meter: frame times in; one-second windows, the lowest reading after the first frame, the time, and the verdict out: running, pass, below 30 or stopped | Scenario 3, D22 |
+| `src/perf/meter.ts` + `.test.ts` | A pure meter: frame times in; frames counted in fixed one-second slots from the first frame, the lowest slot, the time, and the verdict out: running, pass, below 30 or stopped. The last slot ends at 5:00, so the last second is always judged | Scenario 3, D22 |
 | `src/perf/StressLoad.tsx` | 100 columns sharing one `CylinderGeometry(0.6, 0.6, 8, 90, 10)`, 1,980 triangles each, `frustumCulled = false` | D22 |
 | `src/perf/Figure.tsx` | A code-built `SkinnedMesh`: about 5,000 triangles, 20 bones (hips, spine, chest, neck, head; each side shoulder, upper arm, forearm, hand, thigh, shin, foot; a root), each part's vertices weighted to its bone, walking anticlockwise round the Kaabah | O10, D22 |
 | `e2e/frame.ts` | Decodes a Playwright screenshot with pngjs and counts distinct colours | Scenario 4 |
 | `e2e/viewer.spec.ts` | "draws the Kaabah", "says when the view stops", "says when there is no WebGL 2" | Scenarios 1, 4, 5 |
 | `e2e/perf.spec.ts` | "draws the full load" | Scenario 3 |
 | `playwright.config.ts` | `baseURL` from `BASE_URL`, or a local `pnpm build && pnpm preview` server when it is unset. Projects: `chromium`, and `no-webgl` launched with `--disable-3d-apis`, which runs only the no-WebGL test | Scenarios 4, 5 |
-| `.github/workflows/ci.yml` | On push and pull_request: pnpm install with cache, typecheck, lint, test, build. Then, for branches of this repo only: `cloudflare/wrangler-action` pinned to a commit SHA (`pages deploy dist --project-name=virtualhajj --branch=<branch>`), then `playwright install --with-deps chromium` and `pnpm e2e` with `BASE_URL` set to the action's `deployment-url`. No `pull_request_target` | Scenario 4, D30 |
+| `.github/workflows/ci.yml` | On push and pull_request: pnpm install with cache, typecheck, lint, test, build. Then, for branches of this repo only: `cloudflare/wrangler-action` pinned to a commit SHA (`pages deploy dist --project-name=virtualhajj --branch=<branch>`), then a `curl` that retries until the deployment answers, `playwright install --with-deps chromium`, and `pnpm e2e` with `BASE_URL` set to the action's `deployment-url`. The Playwright report is uploaded when a step fails. No `pull_request_target` | Scenario 4, D30 |
 | `README.md`, `OVERVIEW.md` | The Run it table: `pnpm install`, `pnpm dev`, `pnpm test`, `pnpm e2e`, `pnpm lint` | Scope |
 | `docs/ARCHITECTURE.md` | Components and deployment, from the diagrams above | Project docs |
 | `CHANGELOG.md` | The slice 0 entry | `/ship` |
@@ -321,7 +324,7 @@ Reusing: the design system's `styles.css` and tokens, imported as they are, and 
 2. You: create an API token with only Account › Cloudflare Pages › Edit, and note the account ID.
 3. `/build`: commit nothing to main. Run `gh repo create dzaffren/VirtualHajj --public --source . --remote origin`, then `git push origin docs/design-system:main`.
 4. You: run `! gh secret set CLOUDFLARE_API_TOKEN` and `! gh secret set CLOUDFLARE_ACCOUNT_ID`, so the token never passes through Claude.
-5. `/build`: branch `walking-skeleton` off `main`. After the first CI run, protect `main` so the `ci` check must pass, with `gh api -X PUT repos/dzaffren/VirtualHajj/branches/main/protection`.
+5. `/build`: branch `feat/walking-skeleton` off `main`. After the first CI run, protect `main` so the `ci` check must pass, with `gh api -X PUT repos/dzaffren/VirtualHajj/branches/main/protection`.
 
 ### Earn-it
 
@@ -356,7 +359,7 @@ Reusing: the design system's `styles.css` and tokens, imported as they are, and 
 | 2. Phone | Drag and pinch by hand on the Galaxy A35, noted in the PR | By hand |
 | 3. Stress page | `src/perf/meter.test.ts`: 30 FPS passes and 29 fails, the verdict lands at exactly 5:00, the first frame is left out, and a dropped view is a fail. `e2e/perf.spec.ts` › "draws the full load": Drawn reads at least 200,000 triangles in at least 100 draw calls. The 5-minute run on the Galaxy A35, with a screenshot in the PR | `pnpm test`, `pnpm e2e`, by hand |
 | 4. CI | The `ci` workflow on the PR, and branch protection on `main` | GitHub |
-| 5. No view | `src/viewer/viewerState.test.ts`. `e2e/viewer.spec.ts` › "says when the view stops": calls `WEBGL_lose_context.loseContext()` and expects `data-state="stopped"`, the copy and Reload. › "says when there is no WebGL 2", in the `no-webgl` project | `pnpm test`, `pnpm e2e` |
+| 5. No view | `src/viewer/viewerState.test.ts`. `e2e/viewer.spec.ts` › "says when the view stops": calls `WEBGL_lose_context.loseContext()` and expects `data-state="stopped"`, the copy and Reload. › "says when there is no WebGL 2" and "… even before the app runs", in the `no-webgl` project. › "says when the browser is too old to run the app" | `pnpm test`, `pnpm e2e` |
 
 **E2E:** `e2e/viewer.spec.ts` › "draws the Kaabah" walks the slice: it opens the deployed URL, waits for the scene, and proves a real frame was drawn.
 
@@ -380,111 +383,24 @@ Single chunk. The pages share `scene/` and `ui/`, and the first CI run has to an
 | The A35 fails the 5-minute run | That's the test doing its job. Slice 0 is not done; we lower the load in D22, or pick another approach, before `tawaf` builds the mosque |
 | 200,000 triangles is a guess at the mosque | `tawaf` runs `/perf` again with the real scene. D22 says the number is an estimate |
 | A code-built figure costs less than the real character | Same answer: `tawaf` runs `/perf` again with the real character |
-| Cloudflare's preview URL answers a moment after the deploy step returns | The e2e test's first `goto` retries until it gets a 200, up to 60 s |
+| Cloudflare's preview URL answers a moment after the deploy step returns | CI's `curl` retries the URL every 5 s, 12 times, before Playwright starts |
 | Google Fonts is slow or blocked | `fonts.css` falls back to `system-ui`; the page still works |
-| pnpm blocks a package's install script | Allow it by name in `pnpm.onlyBuiltDependencies` |
+| pnpm blocks a package's install script | Allow or deny it by name in `allowBuilds` in `pnpm-workspace.yaml` |
 
 ## Decisions to record
 
-Drafted at pauses 1 to 3. `/build` appends them to `DECISIONS.md` before it builds. They are numbered from D17 because D15 and D16 were recorded first.
+Recorded as D17 to D30.
 
-## D17 · 2026-10-21 · Build the app with React Three Fiber on React, TypeScript and Vite
+## Review
 
-Why: every rite is a 3D scene with UI on top, and React Three Fiber has the largest set of helpers (drei) and answers for 3D on the web.
-Rejected: plain Three.js with TypeScript (scene and UI code written by hand), Svelte with Threlte (a smaller community, so fewer answers when stuck).
-Source: docs/specs/walking-skeleton.md
-Status: active
+2026-10-21 · 8 raw findings, 6 survived, 5 fixed.
 
-## D18 · 2026-10-21 · Host on Cloudflare Pages, with a preview URL per PR
-
-Why: the build is static files that the free tier covers, Cloudflare's edge servers sit close to learners' phones, and each PR gets its own URL to check before merge.
-Rejected: Vercel (a smaller edge network than Cloudflare's, and no gain for a static build), GitHub Pages (a slower CDN and no preview URL per PR), production-only deploys (no way to see a change before it is live).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D19 · 2026-10-21 · Test with Vitest and Playwright
-
-Why: Vitest runs on the app's own Vite config, and Playwright drives a real Chromium on CI, which the e2e test needs to draw a WebGL frame.
-Rejected: Cypress (slower on CI), Vitest with no e2e test (the shape promises an e2e test in CI from slice 0).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D20 · 2026-10-21 · Use pnpm
-
-Why: installs are fast, and its strict layout fails on a package the code uses but never declared.
-Rejected: npm (slower, and lets undeclared packages slip through), bun (less tested with Playwright).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D21 · 2026-10-21 · Run CI on GitHub Actions
-
-Why: one workflow runs the type-check, unit tests, build, deploy and the Playwright test on every push.
-Rejected: Cloudflare Pages' built-in build (it only builds, so the type-check and Playwright would need a second CI).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D22 · 2026-10-21 · Every scene holds 30 FPS on a Samsung Galaxy A35
-
-Why: learners use phones (D2). The `/perf` page draws 200,000 triangles in 100 draw calls — an estimate of the Masjidil Haram scene, not a measurement — plus one walking figure of about 5,000 triangles and 20 bones, standing in for the character (D15). It passes only if no one-second reading after the first frame drops below 30 FPS over 5 minutes, long enough for the phone to heat up and slow down. A dropped 3D view is a fail.
-Rejected: 60 FPS (forces heavy optimisation on every later scene), "loads and renders" (a stuttering scene still passes), the Galaxy A15 (a stricter bar than the shape's mid-range), a throwaway `/poc` (its number could not be re-run when `tawaf` adds the mosque), a 60-second run (too short to catch the phone slowing down as it heats up), a 5-minute average (hides stutter), a load with no figure (misses the character the game adds).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D23 · 2026-10-21 · Keep the repo public, on a personal GitHub account
-
-Why: GitHub Actions has no minute limit on public repos, and no secret lives in the code; the Cloudflare token sits in GitHub's secret store.
-Rejected: a private repo (2,000 free Actions minutes a month), a GitHub org (no team to own it yet).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D24 · 2026-10-21 · Serve production on the free pages.dev domain
-
-Why: slice 0 needs no custom domain, and one can be added later with no code change.
-Rejected: a custom domain now (DNS setup with nothing to gain yet).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D25 · 2026-10-21 · Scene colours live in one scene palette, outside the UI system
-
-Why: the design system covers only the UI drawn over the scene, and the sky, ground, kiswah and ihram colours belong to the place, not the HUD. One palette file keeps every rite's scene the same. The sky turns night blue in dark mode, as the UI does (D16).
-Rejected: scene tokens in the design system (another `/design-system` run for colours the UI never uses), a fixed daytime scene (dark mode would put night-blue panels over a day sky).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D26 · 2026-10-21 · Developer pages sit outside the learner HUD rules
-
-Why: learners never reach `/perf`, because nothing links to it, and a 5-minute run needs a visible clock. The no-timer rule is there so learners never feel rushed. Developer pages still use the system's tokens and its 7:1 text contrast.
-Rejected: holding `/perf` to the no-timer rule (no way to tell how long the run has left).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D27 · 2026-10-21 · When the 3D view can't be shown, say so plainly and offer the way back
-
-Why: a blank or frozen canvas leaves a first-time pilgrim, often older, with no idea what went wrong or what to do. The app covers the scene with the plain backdrop, says what happened in one line, and gives the next step: another browser when WebGL 2 is missing, a Reload button when the view drops.
-Rejected: a blank page (says nothing), a message with no button (an older learner may not know how to reload a phone browser), a frozen frame (looks like the app hung).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D28 · 2026-10-21 · Pin TypeScript to 6.0
-
-Why: typescript-eslint, which the lint step uses, supports TypeScript below 6.1 (checked 2026-10-21). We move to 7 once it supports 7.
-Rejected: TypeScript 7 (ESLint would lose its TypeScript-aware rules until typescript-eslint catches up).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D29 · 2026-10-21 · UI components live in the app until tawaf
-
-Why: slice 0 builds two, the top card and the primary button. Keeping them in `src/ui/` leaves the design-system package tokens-only, so `/design-sync` needs no change. They move into the package when `tawaf` adds more.
-Rejected: exporting them from the design-system package now (the next `/design-sync` would have to switch the package from tokens-only to a component library for two components).
-Source: docs/specs/walking-skeleton.md
-Status: active
-
-## D30 · 2026-10-21 · Fork PRs get the build and unit tests, never secrets
-
-Why: the repo is public (D23), and fork PRs get no secrets, so they can't deploy. Deploy and e2e are skipped for them, and the owner reviews a fork PR by hand before merging, because GitHub counts a skipped required check as passed.
-Rejected: `pull_request_target` (it runs fork code with the Cloudflare token), letting fork PRs fail at the deploy step (every outside PR would look broken).
-Source: docs/specs/walking-skeleton.md
-Status: active
+- correctness · `.github/workflows/ci.yml:12` · a concurrency group per branch or PR, so an older build never deploys after a newer one · `5b4063a`
+- correctness · `src/perf/meter.ts:38` · FPS readings round down, so 29.6 FPS no longer reads as a pass · `b2bd57c`
+- correctness · `src/perf/meter.ts:47` · frames counted in fixed one-second slots, so a stall in the last second before 5:00 is judged · `933c91d`
+- correctness · `src/scene/OrbitCamera.tsx:21` · Ctrl, Cmd and Alt key presses go to the browser, so page zoom works with the scene focused · `95e5bad`
+- correctness · `index.html:34` · a plain script shows the no-WebGL 2 message when the browser can't run the bundle · `a9a34a4`
+- A03 Software Supply Chain Failures, low · `package.json:42` · no change: wrangler and the other new dependencies are needed, and the exact pins, the lockfile, the frozen install and a Pages-only token already bound them
 
 ## Open items
 
@@ -501,12 +417,20 @@ Status: active
 | O9  | The system bans timers, but `/perf` needs to show its progress. Is `/perf` exempt?       | question | spec p2   | user  | Resolved      | Exempt: it is a developer page that nothing links to. It shows "2:14 of 5:00". D26. 2026-10-21                                                                                                                               |
 | O10 | The brief ties D22 to the scene and the character. Does the `/perf` load include a figure? | question | spec p2   | user  | Resolved      | Yes: one code-built figure, about 5,000 triangles and 20 bones, looping a walk. No model file, so shape O7 stays with `tawaf`. Scenario 3 and D22 changed. 2026-10-21                                                         |
 | O11 | What does the learner see on `/` when the browser drops the 3D view?                    | question | spec p2   | user  | Resolved      | The plain backdrop, "The 3D view stopped." and "Reload the page to start it again.", and a Reload button. Folded into scenario 5. On `/perf` a dropped view is a fail. D27. 2026-10-21                                       |
-| O12 | Headless Chromium draws a WebGL frame on GitHub Actions, so the e2e test can check it    | unproven | spec p2   | poc   | Accepted risk | Settled at pause 3: the first CI run is the proof. `/build` pushes the CI workflow, the e2e harness and a bare viewer before anything else. If the frame is blank, it tries, in order, `--use-angle=swiftshader --enable-unsafe-swiftshader`, then `--use-angle=vulkan --use-vulkan=swiftshader --enable-unsafe-swiftshader --enable-features=Vulkan` (on this machine the second made a context but was never seen drawing), then a headed run under `xvfb-run`. If none draws, it sets the spec back to Draft with a blocker. Locally, on the machine that built the preview, headless Chromium drops every WebGL context, even for a bare cube. Rejected: a throwaway `/poc` first, since it would build the same harness and throw it away. 2026-10-21 |
+| O12 | Headless Chromium draws a WebGL frame on GitHub Actions, so the e2e test can check it    | unproven | spec p2   | poc   | Resolved      | Proven 2026-10-21: run 39598209944 (attempt 3) passed all four e2e tests against the preview with Playwright's default Chromium and no extra flags. Settled at pause 3: the first CI run is the proof. `/build` pushes the CI workflow, the e2e harness and a bare viewer before anything else. If the frame is blank, it tries, in order, `--use-angle=swiftshader --enable-unsafe-swiftshader`, then `--use-angle=vulkan --use-vulkan=swiftshader --enable-unsafe-swiftshader --enable-features=Vulkan` (on this machine the second made a context but was never seen drawing), then a headed run under `xvfb-run`. If none draws, it sets the spec back to Draft with a blocker. Locally, on the machine that built the preview, headless Chromium drops every WebGL context, even for a bare cube. Rejected: a throwaway `/poc` first, since it would build the same harness and throw it away. 2026-10-21 |
 | O13 | Where do the top card and the primary button components live?                            | question | spec p3   | user  | Resolved      | In the app, `src/ui/`. The design-system package stays tokens-only. D29. 2026-10-21                                                                                                                                         |
 | O14 | There is no `main` branch yet. How does it come to exist?                                | question | spec p3   | user  | Resolved      | The untracked shape docs, spec and preview are committed on `docs/design-system`, and that branch is pushed to GitHub as `main` at the start of `/build`, with your go-ahead. `/build` branches `walking-skeleton` off it. 2026-10-21 |
 | O15 | Who sets up the GitHub repo, the Cloudflare project, the token, secrets and branch protection? | question | spec p3   | user  | Resolved      | `/build` runs `gh` for the repo, the push and branch protection, asking before each. You create the Cloudflare project and token, and set both secrets with `! gh secret set`. Steps in Technical plan › Changes. 2026-10-21 |
 | O16 | Fork PRs get no secrets. What runs for them?                                             | flag     | spec p3   | user  | Resolved      | The build and unit tests only. Deploy and e2e are skipped, and fork PRs are reviewed by hand before merging. D30. 2026-10-21                                                                                                  |
 | O17 | typescript-eslint supports TypeScript below 6.1, and the latest is 7.0. Which do we use? | question | spec p3   | user  | Resolved      | Pin TypeScript 6.0. D28. 2026-10-21                                                                                                                                                                                          |
+| O18 | Scenario 4 said "Given a developer pushes the branch walking-skeleton to the GitHub repo". | flag | build | user | Decided alone | Chose: the branch is `feat/walking-skeleton`, the `{type}/{slice}` form from zuko's git naming. Scenario 4 and setup step 5 now say so. Other: a bare `walking-skeleton` branch. Undo: push the work to `walking-skeleton` and edit scenario 4 back. 2026-10-21 |
+| O19 | The viewer state diagram had no path from Loading to Stopped. If the browser drops the view before the first frame, the learner waits on "Loading the Kaabah…" for ever. | flag | build | user | Decided alone | Chose: `loading → stopped` on a dropped view, with the same message and Reload button (D27). The diagram and the reducer row now say so. Other: Stopped only from Ready. Undo: remove the `loading` case from `context-lost` in `src/viewer/viewerState.ts` and its test. 2026-10-21 |
+| O20 | The plan named `useColorScheme.ts` and `useReducedMotion.ts`. They differ only in the media query. | flag | build | user | Decided alone | Chose: one `src/scene/useMediaQuery.ts`, called with each query; `useScenePalette()` in `palette.ts` wraps the dark-mode one. Other: two hook files with the same body. Undo: split the hook into the two named files. 2026-10-21 |
+| O21 | pnpm 12 blocked the install scripts of esbuild (from Vite) and workerd (from wrangler), and fails the install until each is allowed or denied. The plan said to allow them. | flag | build | user | Decided alone | Chose: deny both in `pnpm-workspace.yaml` `allowBuilds`. The build, the local preview and the unit tests work without them. Wrangler needs workerd only for `wrangler dev`. Other: allow both. Undo: set both to `true` in `allowBuilds`. 2026-10-21 |
+| O22 | The plan said the e2e test's first `goto` retries until the preview answers. | flag | build | user | Decided alone | Chose: a `curl --retry 12 --retry-delay 5` step in CI before Playwright, so the tests stay plain. Other: a retrying `goto` helper in `e2e/`. Undo: drop the CI step, and add the helper to both spec files. 2026-10-21 |
+| O23 | GitHub has no `CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_ACCOUNT_ID` secret, so CI cannot deploy. The e2e tests have not run on CI, and O12 is still unproven. Runs 39596834395 and 39598209944 failed at the deploy step. | question | build | user | Resolved | You set both secrets and created the Pages project `virtualhajj` with wrangler, at `virtualhajj.pages.dev`. Run 39598209944, attempt 3, deployed and passed the e2e tests. 2026-10-21 |
+| O24 | The plan had only the React bundle replace the Loading card. A browser too old to parse the bundle, such as Safari before 16.4, stayed on "Loading the Kaabah…" for ever, and the scenario 5 phone with no WebGL 2 never saw its message. | flag | review | user | Decided alone | Chose: a plain script in `index.html`, run before the bundle, that shows the no-WebGL 2 message when the browser has no WebGL 2 or can't parse class static blocks. Other: lower Vite's build target so old browsers can parse the bundle; that is untested on old Safari, and three.js or React may still fail there. Undo: revert the review commit that adds the script, and drop its two e2e tests. 2026-10-21 |
+| O25 | Scenario 3 asks for a screenshot of the Galaxy A35 `/perf` readout in the slice's PR. PR #1 has none. | flag | ship | user | Accepted risk | Your call at merge: skip the screenshot. You reported that the A35 run passed. Risk: no record of the reading exists, so `tawaf` has no number to compare its own `/perf` run with. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 

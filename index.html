@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VirtualHajj</title>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- The Loading card shows before the bundle arrives; React replaces it with the same markup. -->
+      <div class="app" data-state="loading">
+        <div class="backdrop"></div>
+        <div class="card">
+          <p class="card-name">VirtualHajj</p>
+          <p class="card-say" aria-live="polite">
+            <span class="when-loading" aria-hidden="false"
+              >Loading the Kaabah…</span
+            >
+            <span class="when-ready" aria-hidden="true"
+              >Drag to look round the Kaabah.</span
+            >
+          </p>
+          <p class="card-hint">
+            <span class="hint-touch">Pinch to zoom in and out.</span>
+            <span class="hint-mouse">
+              Scroll to zoom. With the keyboard, the arrow keys turn the view
+              and + and − zoom.
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <script>
+      // A browser that can't run the bundle would keep the Loading card for ever, so say so before the bundle runs.
+      (function () {
+        var ok = !!document.createElement("canvas").getContext("webgl2");
+        try {
+          new Function("class A { static {} }");
+        } catch (e) {
+          ok = false;
+        }
+        if (ok) return;
+        var app = document.querySelector(".app");
+        app.setAttribute("data-state", "no-webgl");
+        app.querySelector(".card").innerHTML =
+          '<p class="card-name">VirtualHajj</p>' +
+          '<p class="card-say" aria-live="polite"><span>This browser can\'t show the 3D view.</span></p>' +
+          '<p class="card-body">Open this link in an up-to-date Chrome or Safari.</p>';
+      })();
+    </script>
+    <script type="module" src="/src/viewer/main.tsx"></script>
+  </body>
+</html>
