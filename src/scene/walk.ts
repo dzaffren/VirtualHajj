@@ -1,4 +1,4 @@
-import { body, edge, hijr, kaabah } from "./mataf";
+import { body, edge, hijr, kaabah, maqam } from "./mataf";
 
 export interface Point {
   x: number;
@@ -34,7 +34,7 @@ function onHijrWall(x: number, z: number): Point {
   return { x: radius * Math.sin(a), z: faceZ - radius * Math.cos(a) };
 }
 
-// Pushes a spot out of the Kaabah and off the Hijr Ismail wall, and back inside the edge. Pushing out along the nearest side slides the pilgrim along a wall.
+// Pushes a spot out of the Kaabah, off the Hijr Ismail wall and the Maqam Ibrahim's base, and back inside the edge. Pushing out along the nearest side slides the pilgrim along a wall.
 function collide(x: number, z: number): Point {
   const out = Math.hypot(x, z);
   if (out > edge) [x, z] = [(x * edge) / out, (z * edge) / out];
@@ -53,6 +53,14 @@ function collide(x: number, z: number): Point {
   const d = Math.hypot(x - w.x, z - w.z);
   if (d < clear && d > 0)
     [x, z] = [w.x + ((x - w.x) * clear) / d, w.z + ((z - w.z) * clear) / d];
+
+  const round = maqam.radius + body;
+  const m = Math.hypot(x - maqam.x, z - maqam.z);
+  if (m < round && m > 0)
+    [x, z] = [
+      maqam.x + ((x - maqam.x) * round) / m,
+      maqam.z + ((z - maqam.z) * round) / m,
+    ];
   return { x, z };
 }
 
