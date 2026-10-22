@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { BaseScene } from "../scene/BaseScene";
 import { canvasConfig } from "../scene/canvasConfig";
 import { hasWebGL2 } from "../scene/hasWebGL2";
+import { facingAnticlockwise, onCircle } from "../scene/mataf";
 import { OrbitCamera } from "../scene/OrbitCamera";
+import { Pilgrim, type PilgrimPose } from "../scene/Pilgrim";
+import { HajarAswadLine, HijrWall } from "../scene/TawafScene";
 import { TopCard } from "../ui/TopCard";
-import { Figure } from "./Figure";
 import {
   clock,
   meterFrame,
@@ -49,6 +51,25 @@ function PerfMeter({ onReading, onDrawn }: MeterProps) {
     );
   });
   return null;
+}
+
+// Walks the tawaf pilgrim anticlockwise round the Kaabah, 16 m out, so /perf draws what /tawaf does (D42).
+function WalkingPilgrim() {
+  const pose = useRef<PilgrimPose>({
+    ...onCircle(16, 0),
+    facing: facingAnticlockwise(0),
+    stride: 0,
+  });
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const a = t * 0.12;
+    pose.current = {
+      ...onCircle(16, a),
+      facing: facingAnticlockwise(a),
+      stride: Math.sin(t * 5) * 0.5,
+    };
+  });
+  return <Pilgrim pose={pose} />;
 }
 
 const check = <path d="M20 6 9 17l-5-5" />;
@@ -113,11 +134,13 @@ export function App() {
         className="scene"
         tabIndex={0}
         role="img"
-        aria-label="Stress scene: columns round the Kaabah and one walking figure."
+        aria-label="Stress scene: columns round the Kaabah, the Hijr Ismail wall, the glowing Hajar Aswad line and one walking pilgrim."
       >
         <BaseScene />
         <StressLoad />
-        <Figure />
+        <HijrWall />
+        <HajarAswadLine hints />
+        <WalkingPilgrim />
         <OrbitCamera />
         <PerfMeter onReading={setReading} onDrawn={setDrawn} />
       </Canvas>

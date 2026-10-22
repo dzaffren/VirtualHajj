@@ -148,11 +148,110 @@ Status: active
 Why: slice 0 builds two, the top card and the primary button. Keeping them in `src/ui/` leaves the design-system package tokens-only, so `/design-sync` needs no change. They move into the package when `tawaf` adds more.
 Rejected: exporting them from the design-system package now (the next `/design-sync` would have to switch the package from tokens-only to a component library for two components).
 Source: docs/specs/walking-skeleton.md
-Status: active
+Status: superseded by D41
 
 ## D30 · 2026-10-21 · Fork PRs get the build and unit tests, never secrets
 
 Why: the repo is public (D23), and fork PRs get no secrets, so they can't deploy. Deploy and e2e are skipped for them, and the owner reviews a fork PR by hand before merging, because GitHub counts a skipped required check as passed.
 Rejected: `pull_request_target` (it runs fork code with the Cloudflare token), letting fork PRs fail at the deploy step (every outside PR would look broken).
 Source: docs/specs/walking-skeleton.md
+Status: active
+
+## D31 · 2026-10-22 · Build the tawaf scene and figure in code
+
+Why: the brief asks for stylised figures with no face detail, and shapes built in code need no licence, no credit and no model download on a phone. The `/perf` figure is already built in code, at about 5,000 triangles (D22).
+Rejected: free models with a licence (each licence needs a check, and some ban commercial use), bought models (they cost money, and the look may not match the brief).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D32 · 2026-10-22 · A tawaf round counts from the Hajar Aswad line, with the Kaabah on the left, outside the Hijr Ismail
+
+Why: these are conditions of a valid round in the Shafi'i rulings (D1). A round counts when the figure crosses the line with no mistake. If the figure goes more than 3 m back clockwise, or steps inside the Hijr Ismail wall, the app names it and the round does not count. The round starts again at the next crossing. Before the first crossing, nothing counts and nothing is named, because tawaf has not started.
+Rejected: the tawaf starts over after a mistake (stricter than the ruling), any step clockwise (small wobbles from tap-to-walk would count), a quarter round (a long wrong walk would pass unnamed), a direction check before the line (it is not tawaf yet).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D33 · 2026-10-22 · With hints off, the learner counts the rounds and taps Done
+
+Why: a pilgrim must count seven rounds in Makkah, and the shape's success test is a rite walked with the hints off. Hints off hides the top card and the line's glow. The line stays as a plain marking, and mistakes are still named. Only Done at seven is correct. Done under seven is named, and the learner walks on. Done over seven is named, ends the tawaf, and goes on the done card's list, since an eighth round does not void a Shafi'i tawaf. The switch works at any time. Hints on with seven or more counted ends the tawaf, as Done does.
+Rejected: the counter stays with hints off (the learner never practises the count), no line with hints off (the learner loses the fixed place to count from), a switch that locks once round 1 starts (the app is a learning tool, not a test), any wrong count starts the tawaf over (an eighth round does not void the tawaf).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D34 · 2026-10-22 · Learner pages open in the browser's language, with a language choice to change it
+
+Why: Tabung Haji courses teach in Malay, and other learners need English (D4). A browser whose first language is Malay opens `/` and `/tawaf` in Malay, and any other opens them in English. The design system's language choice sits in the menu sheet on `/tawaf` and on the viewer's card on `/`. `/perf` stays in English, because it is a developer page (D26).
+Rejected: Malay first on every visit (an English learner must find the choice each time), a language choice on a start card at every visit (one more tap before every lesson), English only on `/` (a Malay learner's first screen would be English), Malay anywhere in the browser's language list (a browser set to English would open in Malay), a compact BM / EN control in the top bar (the system has none, and the top bar is full on a 390px phone).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D35 · 2026-10-22 · Keep the language and hints settings on the device
+
+Why: a learner who picked BM, or who practises with hints off, gets the same setting back on the next visit. Only these two settings are kept. No tawaf in progress is saved, so a reload or a new visit starts a new tawaf.
+Rejected: hints on at every visit (a learner who practises with hints off must switch them off each time).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D36 · 2026-10-22 · Tawaf lives at /tawaf, and the viewer at / links to it
+
+Why: each rite gets its own address that a course can send, and the viewer stays as the first screen, with a Start tawaf button.
+Rejected: tawaf at `/` in place of the viewer (the viewer would go, and a later rite would need a new front page anyway).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D37 · 2026-10-22 · A man in ihram walks until the character pick ships
+
+Why: the white ihram reads as a pilgrim on the mataf. Idtiba' and raml are sunnah, so a figure without them teaches nothing wrong. `tawaf-character` adds the pick and both rules.
+Rejected: a woman (she comes with the pick in `tawaf-character`), a figure with no clothing detail (it does not read as a pilgrim).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D38 · 2026-10-22 · The done card lists each mistake made on the way
+
+Why: after a tawaf with hints off, the list tells the learner what to practise. It states facts and gives no score, so the no-score rule holds (D15).
+Rejected: a done card with no list (a learner may forget a mistake from round 2 by round 7).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D39 · 2026-10-22 · The pilgrim gets a ground shadow and no rim
+
+Why: the brief asks for a ground shadow and a darker rim, so the white ihram reads on white marble. In the preview, the skin, the hair and the shadow already do that. A rim draws the figure a second time each frame on the Galaxy A35 (D22).
+Rejected: a dark rim round the figure (a second draw of the figure each frame, for no gain seen in the preview).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D40 · 2026-10-22 · The tawaf camera turns towards the Kaabah
+
+Why: a portrait phone sees about 24° across, so a camera straight behind the figure never shows the Kaabah, and the rule is "keep the Kaabah on your left". The camera stays behind and above the figure, turned 35° towards the Kaabah on a landscape screen, and 62° and further back on a portrait one. Walking the wrong way, it turns right, and the Kaabah shows on that side.
+Rejected: a camera straight behind the figure, as the brief assumed (the Kaabah is off screen on a phone).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D41 · 2026-10-22 · UI components stay in the app, in src/ui/
+
+Why: tawaf adds seven components: the hints switch, menu button, quiet button, language choice, progress marks, bottom sheet and icons. Keeping them in `src/ui/` leaves the design-system package tokens-only, so `/design-sync` needs no change. They move into the package when a second app, or the Claude Design canvas, needs to mount them.
+Rejected: moving them into the package now (it turns into a component library, and the next `/design-sync` needs a new entry and a preview per component).
+Supersedes: D29
+Source: docs/specs/tawaf.md
+Status: active
+
+## D42 · 2026-10-22 · /perf draws the pilgrim and the tawaf parts
+
+Why: D22 needs every scene to hold 30 FPS on the Galaxy A35. `/perf` swaps its old figure for the pilgrim, and adds the Hijr Ismail wall and the glowing line. `/tawaf` draws less than `/perf` does, so one 5-minute run covers both, and no meter code goes on a learner page.
+Rejected: a meter on `/tawaf` behind `?meter` (meter code on a learner page, and a second 5-minute run for each scene).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D43 · 2026-10-22 · The e2e tests steer the pilgrim through a ?e2e hook
+
+Why: the slice test walks seven rounds. With `?e2e=1`, the page exposes `window.vh.walkTo(x, z)`, which takes the same path as a tap, and walks 10 times faster, so seven rounds take seconds on CI. The hook only moves the learner's own pilgrim.
+Rejected: real arrow keys with the test steering by the pilgrim's position (about 3 minutes a run, and steering at CI's low frame rate is flaky).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D44 · 2026-10-22 · Up walks the pilgrim, Left and Right turn it
+
+Why: Up walks forward the way the pilgrim faces, Down walks back, and Left and Right turn it, so holding Up and Left walks the tawaf circle. The camera turns towards the Kaabah (D40), so up the screen is not the way the pilgrim walks.
+Rejected: keys that follow the screen (with the camera turned, Up would walk the pilgrim at an angle to the way it faces).
+Source: docs/specs/tawaf.md
 Status: active

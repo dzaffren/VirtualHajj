@@ -27,7 +27,11 @@ Every source gives the learner a flat picture, and the first time they walk the 
 ```mermaid
 flowchart LR
     S0[0 walking-skeleton] -->|3D scene, deploy, CI| S1[1 tawaf]
-    S1 -->|step checks, hints, mosque scene| S2[2 sai]
+    S1 -->|figure, step checks, HUD| S1B[1b tawaf-stations]
+    S1 -->|figure, controls| S1C[1c tawaf-character]
+    S1 -->|mataf, Kaabah| S1D[1d masjidil-haram]
+    S1C -->|man or woman, ihram| S3
+    S1 -->|step checks, hints| S2[2 sai]
     S1 -->|tawaf| S3[3 umrah]
     S2 -->|sa'i| S3
     S1 -->|step checks| S4[4 hajj-days-8-9]
@@ -38,12 +42,15 @@ flowchart LR
     S5 -->|days 10-13| S6
 ```
 
-Tawaf builds the step checks and the mosque scene, and every later rite reuses them; `hajj-type` joins all the rites into one journey.
+Tawaf builds the step checks and the walking figure, and every later rite reuses them; `hajj-type` joins all the rites into one journey.
 
 | # | Slice | What ships | Why this order |
 |---|-------|-----------|----------------|
 | 0 | `walking-skeleton` | A learner opens a link on a phone or laptop and turns the camera round a plain Kaabah. One e2e test runs in CI, and the site is live. | The repo is empty. This slice proves the 3D, deploy and test rails, and the phone speed (O8). |
-| 1 | `tawaf` | A learner walks seven anticlockwise rounds from the Hajar Aswad line, with hints on or off. The app names each mistake. Malay and English. | It builds the step checks and the Masjidil Haram scene that slices 2 to 5 reuse. |
+| 1 | `tawaf` | A learner walks seven anticlockwise rounds from the Hajar Aswad line, with hints on or off. The app names each mistake. Malay and English. | It builds the step checks and the walking figure that slices 2 to 5 reuse. Split at `/spec` into 1 to 1d. |
+| 1b | `tawaf-stations` | The station sheet at the Hajar Aswad line with istilam, the doa between the Rukun Yamani and the Hajar Aswad, and two rakaat behind the Maqam Ibrahim. | It reuses the figure and the step checks from `tawaf`. |
+| 1c | `tawaf-character` | The learner picks a man or a woman. Men learn idtiba' and raml. The joystick switch joins the menu. | It reuses the figure from `tawaf`. `umrah` needs the pick for ihram. |
+| 1d | `masjidil-haram` | The mosque round the mataf, and a `/perf` re-run at full mosque size. | It adds the mosque to the `tawaf` scene. |
 | 2 | `sai` | A learner walks seven legs from Safa to Marwah, with the green-light zone, hints on or off. | It reuses the step checks and the mosque scene from `tawaf`. |
 | 3 | `umrah` | A learner makes niyyah and puts on ihram before the miqat, then does tawaf, sa'i and tahallul in order. | It needs `tawaf` and `sai`. It completes the Umrah part of tamattu'. |
 | 4 | `hajj-days-8-9` | A learner goes to Mina on the 8th, does wuquf at Arafah on the 9th, and spends the night at Muzdalifah. | It is the first of the Hajj days. It needs only the step checks from `tawaf`. |
@@ -76,6 +83,12 @@ Tawaf builds the step checks and the mosque scene, and every later rite reuses t
 
 - **Tawaf** — seven anticlockwise rounds of the Kaabah, starting at the Hajar Aswad.
 - **Hajar Aswad** — the Black Stone in one corner of the Kaabah, where each round of tawaf starts.
+- **Istilam** — saluting the Hajar Aswad with the right hand at the start of each round.
+- **Rukun Yamani** — the Kaabah corner before the Hajar Aswad corner, in the direction of tawaf.
+- **Maqam Ibrahim** — the station of Ibrahim, a small enclosure near the Kaabah.
+- **Rakaat** — units of the prayer; two are prayed behind the Maqam Ibrahim after tawaf.
+- **Idtiba'** — wearing the ihram cloth under the right arm and over the left shoulder, for men in tawaf.
+- **Raml** — walking briskly in the first three rounds of tawaf, for men.
 - **Sa'i** — seven walks between the hills of Safa and Marwah, inside the Mas'a.
 - **Mas'a** — the long hall in the Masjidil Haram where sa'i is done.
 - **Miqat** — the boundary that a pilgrim must not cross without ihram.

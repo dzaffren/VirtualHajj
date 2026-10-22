@@ -19,6 +19,7 @@ A virtual, interactive 3D space for learning Hajj procedures such as tawaf, sa'i
 ## Features
 
 - A learner opens a link on a phone or laptop and turns the camera round a plain Kaabah; `/perf` proves a scene holds 30 FPS.
+- A learner walks a man in ihram seven times round the Kaabah, anticlockwise from the Hajar Aswad line, and the app names each mistake when it happens. With the hints off, the learner counts the rounds alone.
 
 ## Docs
 
