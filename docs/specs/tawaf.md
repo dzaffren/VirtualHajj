@@ -484,6 +484,17 @@ Single chunk. The page, the rules and the viewer share `settings.ts`, `copy.ts` 
 
 Recorded as D31, D32, D33, D34, D35, D36, D37, D38, D39, D40, D41, D42, D43, D44.
 
+## Review
+
+2026-10-22 · 11 raw findings (7 after merging duplicates), 6 survived, 6 fixed.
+
+- correctness · `src/tawaf/tawafRules.ts:72` · Done before the line names nothing · `4cc5bee`
+- correctness · `src/tawaf/App.tsx:118` · the menu closes when switching hints on ends the tawaf · `cf3f62a`
+- ui · `src/tawaf/TawafHud.tsx:73` · the HUD behind an open sheet is inert, so focus stays in the sheet · `4a83436`
+- ui · `src/styles/app.css:617` · the hints switch thumb jumps with reduced motion · `de9f29c`
+- coverage · `src/tawaf/TawafHud.tsx:105` · tests press Walk again, Start tawaf again, Back and the edge arrow · `08e2756`
+- coverage · `src/tawaf/App.tsx:84` · a test walks the pilgrim forward with the arrow keys · `b35d9a8`
+
 ## Open items
 
 | ID  | What                                                                                         | Type     | Raised at | Owner | Status   | Answer                                                                                                                                                      |
