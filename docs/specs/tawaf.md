@@ -191,7 +191,7 @@ Interface › Screens and copy holds every string in both languages.
 - The man or woman pick, idtiba', and raml in the first three rounds → `tawaf-character`.
 - The on-screen joystick and its switch in the menu → `tawaf-character`.
 - The "Show me" button from the system's walking HUD → `tawaf-stations`, with "Show me how".
-- A darker rim round the figure, as the brief asks → O24.
+- A darker rim round the figure, as the brief asks → not doing (D39).
 - The mosque round the mataf, and a `/perf` re-run at full mosque size → `masjidil-haram`.
 - Badges, completion marks and the journey map → a later slice; the shape has none yet.
 - Saving a tawaf in progress → not doing (shape). Only the language and hints settings are kept.
@@ -309,7 +309,7 @@ New scene palette entries, outside the UI system (D25):
 
 ## Decisions to record
 
-Drafted at pause 1. `/build` appends them to `DECISIONS.md` exactly as below.
+Drafted at pauses 1 and 2. `/build` appends them to `DECISIONS.md` exactly as below.
 
 ```markdown
 ## D31 · 2026-10-22 · Build the tawaf scene and figure in code
@@ -328,8 +328,8 @@ Status: active
 
 ## D33 · 2026-10-22 · With hints off, the learner counts the rounds and taps Done
 
-Why: a pilgrim must count seven rounds in Makkah, and the shape's success test is a rite walked with the hints off. Hints off hides the top card and the line's glow, and mistakes are still named. Only Done at seven is correct. Done under seven is named, and the learner walks on. Done over seven is named, ends the tawaf, and goes on the done card's list, since an eighth round does not void a Shafi'i tawaf. The switch works at any time. Hints on with seven or more counted ends the tawaf, as Done does.
-Rejected: the counter stays with hints off (the learner never practises the count), a switch that locks once round 1 starts (the app is a learning tool, not a test), any wrong count starts the tawaf over (an eighth round does not void the tawaf).
+Why: a pilgrim must count seven rounds in Makkah, and the shape's success test is a rite walked with the hints off. Hints off hides the top card and the line's glow. The line stays as a plain marking, and mistakes are still named. Only Done at seven is correct. Done under seven is named, and the learner walks on. Done over seven is named, ends the tawaf, and goes on the done card's list, since an eighth round does not void a Shafi'i tawaf. The switch works at any time. Hints on with seven or more counted ends the tawaf, as Done does.
+Rejected: the counter stays with hints off (the learner never practises the count), no line with hints off (the learner loses the fixed place to count from), a switch that locks once round 1 starts (the app is a learning tool, not a test), any wrong count starts the tawaf over (an eighth round does not void the tawaf).
 Source: docs/specs/tawaf.md
 Status: active
 
@@ -367,6 +367,20 @@ Why: after a tawaf with hints off, the list tells the learner what to practise. 
 Rejected: a done card with no list (a learner may forget a mistake from round 2 by round 7).
 Source: docs/specs/tawaf.md
 Status: active
+
+## D39 · 2026-10-22 · The pilgrim gets a ground shadow and no rim
+
+Why: the brief asks for a ground shadow and a darker rim, so the white ihram reads on white marble. In the preview, the skin, the hair and the shadow already do that. A rim draws the figure a second time each frame on the Galaxy A35 (D22).
+Rejected: a dark rim round the figure (a second draw of the figure each frame, for no gain seen in the preview).
+Source: docs/specs/tawaf.md
+Status: active
+
+## D40 · 2026-10-22 · The tawaf camera turns towards the Kaabah
+
+Why: a portrait phone sees about 24° across, so a camera straight behind the figure never shows the Kaabah, and the rule is "keep the Kaabah on your left". The camera stays behind and above the figure, turned 35° towards the Kaabah on a landscape screen, and 62° and further back on a portrait one. Walking the wrong way, it turns right, and the Kaabah shows on that side.
+Rejected: a camera straight behind the figure, as the brief assumed (the Kaabah is off screen on a phone).
+Source: docs/specs/tawaf.md
+Status: active
 ```
 
 ## Open items
@@ -394,10 +408,10 @@ Status: active
 | O19 | Pause 1 said the path ahead glows. The system glows the next target instead. Which? | question | spec p2 | user | Resolved | The Hajar Aswad line glows, with the system's edge arrow when it is out of sight. Changes O7 and scenarios 1 and 3. 2026-10-22 |
 | O20 | The system's walking HUD has a "Show me" button. Is it in this slice? | question | spec p2 | user | Resolved | No. It goes to `tawaf-stations` with "Show me how". With hints off, Done takes its corner. 2026-10-22 |
 | O21 | Which motion tier? | question | spec p2 | user | Resolved | Tier 2, as Interface sets. 2026-10-22 |
-| O22 | With hints off, does the Hajar Aswad line still show? | question | spec p2 | user | Open | — |
-| O23 | Claude drafted the Malay copy, and nobody else checks it (shape O2). | flag | spec p2 | user | Open | — |
-| O24 | The brief asks for a darker rim round the figure as well as the ground shadow. The preview has only the shadow. | question | spec p2 | user | Open | — |
-| O25 | A camera straight behind the figure can't see the Kaabah on a portrait phone. The preview turns the camera towards the Kaabah. | question | spec p2 | user | Open | — |
+| O22 | With hints off, does the Hajar Aswad line still show? | question | spec p2 | user | Resolved | Yes, as a plain marking with no glow, so the learner has a fixed place to count from. D33. 2026-10-22 |
+| O23 | Claude drafted the Malay copy, and nobody else checks it (shape O2). | flag | spec p2 | user | Resolved | You read the Malay states in the preview before you approve pause 2. Approval means the strings in Interface › Screens and copy stand. 2026-10-22 |
+| O24 | The brief asks for a darker rim round the figure as well as the ground shadow. The preview has only the shadow. | question | spec p2 | user | Resolved | No rim. Skin, hair and the shadow set the white ihram off the marble. D39. 2026-10-22 |
+| O25 | A camera straight behind the figure can't see the Kaabah on a portrait phone. The preview turns the camera towards the Kaabah. | question | spec p2 | user | Resolved | Keep the turned camera: 35° on landscape, 62° and further back on portrait. D40. 2026-10-22 |
 
 _Never delete this section or its rows. See references/ledger.md._
 
