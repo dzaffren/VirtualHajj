@@ -32,10 +32,10 @@ export interface TawafHudProps {
   onBack: () => void;
   onTurnToLine: () => void;
   onReload: () => void;
-  onStartRound?: () => void;
-  onShowMe?: () => void;
-  onFinish?: () => void;
-  onTurnToSpot?: () => void;
+  onStartRound: () => void;
+  onShowMe: () => void;
+  onFinish: () => void;
+  onTurnToSpot: () => void;
 }
 
 // Keeps a sheet's last content on screen while it leaves.
@@ -60,6 +60,10 @@ export function TawafHud(props: TawafHudProps) {
       ? view.phase
       : null,
   );
+  // After Show me how, focus goes back to it when the sheet rises again.
+  const [afterDemo, setAfterDemo] = useState(false);
+  if (view.phase === "istilam" && view.demo && !afterDemo) setAfterDemo(true);
+  if (view.phase !== "istilam" && afterDemo) setAfterDemo(false);
 
   if (view.phase === "loading")
     return <TopCard name={t.tawaf} say={<span>{t.loading}</span>} />;
@@ -91,7 +95,7 @@ export function TawafHud(props: TawafHudProps) {
   const afterRounds = view.phase === "to-maqam";
   return (
     <>
-      {/* While a sheet is open, the controls behind its scrim take no focus or clicks. */}
+      {/* While a sheet is open, the controls and station sheets behind its scrim take no focus or clicks. */}
       <div inert={Boolean(done.shown || menu.shown)}>
         <div className="top-bar">
           <HintsSwitch
@@ -149,53 +153,58 @@ export function TawafHud(props: TawafHudProps) {
             onClick={props.onTurnToSpot}
           />
         )}
+        {station.shown === "istilam" && (
+          <StationSheet
+            station={t.stationStart}
+            title={t.istilamTitle}
+            arabicName={arabic.hajarAswad}
+            titleId="station-title"
+            leaving={station.leaving}
+            onGone={station.onGone}
+          >
+            <p className="station-body">{t.istilamBody}</p>
+            <DoaBlock
+              doa={arabic.istilam.doa}
+              reading={arabic.istilam.reading}
+              meaning={t.istilamMeaning}
+            />
+            <p className="sheet-note">{t.istilamThen}</p>
+            <div className="station-actions">
+              <PrimaryButton onClick={props.onStartRound}>
+                {t.startRound1}
+              </PrimaryButton>
+              <QuietButton
+                onClick={props.onShowMe}
+                data-autofocus={afterDemo || undefined}
+              >
+                {t.showMeHow}
+              </QuietButton>
+            </div>
+          </StationSheet>
+        )}
+        {station.shown === "rakaat" && (
+          <StationSheet
+            station={t.stationAfter}
+            title={t.rakaatTitle}
+            arabicName={arabic.maqamIbrahim}
+            titleId="station-title"
+            leaving={station.leaving}
+            onGone={station.onGone}
+          >
+            <p className="station-body">{t.rakaatBody}</p>
+            <div className="rakaat">
+              <p>{t.rakaatFirst}</p>
+              <p>{t.rakaatSecond}</p>
+            </div>
+            <p className="sheet-note">{t.rakaatCrowd}</p>
+            <div className="station-actions">
+              <PrimaryButton onClick={props.onFinish}>
+                {t.finishTawaf}
+              </PrimaryButton>
+            </div>
+          </StationSheet>
+        )}
       </div>
-      {station.shown === "istilam" && (
-        <StationSheet
-          station={t.stationStart}
-          title={t.istilamTitle}
-          arabicName={arabic.hajarAswad}
-          titleId="station-title"
-          leaving={station.leaving}
-          onGone={station.onGone}
-        >
-          <p className="station-body">{t.istilamBody}</p>
-          <DoaBlock
-            doa={arabic.istilam.doa}
-            reading={arabic.istilam.reading}
-            meaning={t.istilamMeaning}
-          />
-          <p className="sheet-note">{t.istilamThen}</p>
-          <div className="station-actions">
-            <PrimaryButton onClick={props.onStartRound}>
-              {t.startRound1}
-            </PrimaryButton>
-            <QuietButton onClick={props.onShowMe}>{t.showMeHow}</QuietButton>
-          </div>
-        </StationSheet>
-      )}
-      {station.shown === "rakaat" && (
-        <StationSheet
-          station={t.stationAfter}
-          title={t.rakaatTitle}
-          arabicName={arabic.maqamIbrahim}
-          titleId="station-title"
-          leaving={station.leaving}
-          onGone={station.onGone}
-        >
-          <p className="station-body">{t.rakaatBody}</p>
-          <div className="rakaat">
-            <p>{t.rakaatFirst}</p>
-            <p>{t.rakaatSecond}</p>
-          </div>
-          <p className="sheet-note">{t.rakaatCrowd}</p>
-          <div className="station-actions">
-            <PrimaryButton onClick={props.onFinish}>
-              {t.finishTawaf}
-            </PrimaryButton>
-          </div>
-        </StationSheet>
-      )}
       {done.shown && (
         <DoneSheet
           mistakes={done.shown.mistakes}

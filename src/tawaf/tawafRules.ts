@@ -60,9 +60,12 @@ export function start(x: number, z: number, hints: boolean): TawafState {
   };
 }
 
+// A station sheet shows: the istilam sheet at the line, or the rakaat sheet behind the Maqam Ibrahim.
+export const atStation = (s: TawafState) => s.istilam === "sheet" || s.rakaat;
+
 // While a station sheet shows, the pilgrim stands still and nothing changes.
 export function move(s: TawafState, x: number, z: number): TawafState {
-  if (s.done || s.rakaat || s.istilam === "sheet") return s;
+  if (s.done || atStation(s)) return s;
   let d = Math.atan2(-z, x) - s.angle;
   d -= turn * Math.round(d / turn);
   const angle = s.angle + d;
@@ -147,8 +150,12 @@ function part(s: TawafState): RoundPart {
   return past > rukunYamaniPast ? "doa" : "walk";
 }
 
-// offScreen is the side of the next target the camera can't see: the line before round 1, the spot after the rounds.
-export function hudView(s: TawafState, offScreen: Side = null): HudView {
+// offScreen is the side of the next target the camera can't see: the line before round 1, the spot after the rounds. demo is true while Show me how plays.
+export function hudView(
+  s: TawafState,
+  offScreen: Side = null,
+  demo = false,
+): HudView {
   if (s.done) return { phase: "done", mistakes: s.mistakes, prayed: s.prayed };
   if (s.rakaat) return { phase: "rakaat" };
   if (s.afterRounds)
@@ -157,7 +164,7 @@ export function hudView(s: TawafState, offScreen: Side = null): HudView {
       spotOffScreen: offScreen,
       over: s.counted > 7 ? s.counted : null,
     };
-  if (s.istilam === "sheet") return { phase: "istilam", demo: false };
+  if (s.istilam === "sheet") return { phase: "istilam", demo };
   if (!s.started) return { phase: "before-line", lineOffScreen: offScreen };
   if (s.short) return { phase: "short", counted: s.counted };
   if (s.void) return { phase: "void", round: s.counted + 1, kind: s.void };

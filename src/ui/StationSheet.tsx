@@ -11,7 +11,7 @@ interface StationSheetProps {
 }
 
 // The system's station sheet. It rises from the bottom while the pilgrim stands still, with no scrim, so the top bar stays in reach.
-// Focus moves to its first button, and leaves with it, so the arrow keys walk again.
+// Focus moves to the button marked data-autofocus, else its first button, and leaves with it, so the arrow keys walk again.
 export function StationSheet({
   station,
   title,
@@ -25,7 +25,10 @@ export function StationSheet({
 
   useEffect(() => {
     const el = sheet.current;
-    el?.querySelector<HTMLElement>("button")?.focus();
+    (
+      el?.querySelector<HTMLElement>("[data-autofocus]") ??
+      el?.querySelector<HTMLElement>("button")
+    )?.focus();
     return () => {
       const now = document.activeElement;
       if (now instanceof HTMLElement && el?.contains(now)) now.blur();

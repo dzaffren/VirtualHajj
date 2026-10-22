@@ -101,6 +101,10 @@ function Tawaf({
         onBack={() => {}}
         onTurnToLine={() => {}}
         onReload={() => {}}
+        onStartRound={() => {}}
+        onShowMe={() => {}}
+        onFinish={() => {}}
+        onTurnToSpot={() => {}}
       />
     </div>
   );
