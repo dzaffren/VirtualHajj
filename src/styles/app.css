@@ -193,3 +193,406 @@ body {
 .result.below {
   color: var(--vh-mistake);
 }
+
+/* The walking HUD for /tawaf, composed from the system's canvas boards. Tier 2 motion. */
+.icon {
+  flex: none;
+  width: var(--vh-space-6);
+  height: var(--vh-space-6);
+}
+
+.top-bar {
+  position: absolute;
+  top: var(--vh-space-2);
+  left: var(--vh-space-2);
+  right: var(--vh-space-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--vh-space-2);
+}
+.card.below-bar {
+  top: calc(2 * var(--vh-space-2) + var(--vh-target));
+  gap: var(--vh-space-2);
+}
+.corner {
+  position: absolute;
+  bottom: var(--vh-space-2);
+  margin: 0;
+}
+.corner-left {
+  left: var(--vh-space-2);
+}
+.corner-right {
+  right: var(--vh-space-2);
+}
+@media (min-width: 1024px) {
+  .top-bar {
+    top: var(--vh-space-4);
+    left: var(--vh-space-4);
+    right: var(--vh-space-4);
+  }
+  .card.below-bar {
+    top: calc(2 * var(--vh-space-4) + var(--vh-target));
+  }
+  .corner {
+    bottom: var(--vh-space-4);
+  }
+  .corner-left {
+    left: var(--vh-space-4);
+  }
+  .corner-right {
+    right: var(--vh-space-4);
+  }
+}
+.corner .primary-button {
+  margin-top: 0;
+}
+
+/* The hints switch. In the top bar it sits on a surface chip. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vh-space-3);
+  min-height: var(--vh-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--vh-radius-control);
+  background: transparent;
+  color: var(--vh-ink);
+  font: var(--vh-text-label);
+  cursor: pointer;
+  transition: background-color var(--vh-dur-micro) var(--vh-ease-settle);
+}
+.top-bar .switch {
+  padding: 0 var(--vh-space-3) 0 var(--vh-space-4);
+  background: var(--vh-surface);
+}
+.top-bar .switch:hover,
+.icon-button:hover {
+  background: var(--vh-sunken);
+}
+.sheet .switch .switch-label {
+  min-width: calc(var(--vh-space-16) + var(--vh-space-6));
+  text-align: left;
+}
+.switch-track {
+  position: relative;
+  display: block;
+  width: calc(var(--vh-space-12) + var(--vh-space-2));
+  height: var(--vh-space-8);
+  box-sizing: border-box;
+  border: 1px solid var(--vh-line);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-sunken);
+  transition: background-color var(--vh-dur-micro) var(--vh-ease-settle);
+}
+.switch-thumb {
+  position: absolute;
+  top: calc(var(--vh-space-1) - 1px);
+  left: calc(var(--vh-space-1) - 1px);
+  width: var(--vh-space-6);
+  height: var(--vh-space-6);
+  border-radius: var(--vh-radius-inner);
+  background: var(--vh-ink-muted);
+  transition: transform var(--vh-dur-micro) var(--vh-ease-settle);
+}
+.switch[aria-checked="true"] .switch-track {
+  border: var(--vh-accent-edge);
+  background: var(--vh-accent);
+}
+.switch[aria-checked="true"] .switch-thumb {
+  background: var(--vh-on-accent);
+  transform: translateX(var(--vh-space-6));
+}
+.switch-word {
+  min-width: var(--vh-space-8);
+  font-weight: 400;
+  color: var(--vh-ink-muted);
+}
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--vh-target);
+  height: var(--vh-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-surface);
+  color: var(--vh-ink);
+  cursor: pointer;
+  transition: background-color var(--vh-dur-micro) var(--vh-ease-settle);
+}
+.sheet .icon-button {
+  background: var(--vh-sunken);
+}
+
+/* The top card's progress row: the lead line and seven marks. */
+.card-lead-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vh-space-2) var(--vh-space-4);
+}
+.card-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--vh-space-2);
+  margin: 0;
+  font: var(--vh-text-lead);
+}
+.card-mistake .card-lead {
+  color: var(--vh-mistake);
+}
+.card-note {
+  margin: 0;
+  font: var(--vh-text-body);
+  color: var(--vh-ink-muted);
+}
+.marks {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--vh-space-1);
+  width: calc(var(--vh-space-16) * 2);
+}
+.mark {
+  height: var(--vh-space-2);
+  box-sizing: border-box;
+  border: 1.5px solid var(--vh-line);
+  border-radius: var(--vh-radius-mark);
+}
+.mark.now {
+  border: var(--vh-accent-edge);
+  background: var(--vh-accent);
+}
+.mark.done {
+  border-color: var(--vh-ink);
+  background: var(--vh-ink);
+  transform-origin: left;
+  animation: mark-fill var(--vh-dur-step) var(--vh-ease-settle);
+}
+/* One instruction gives way to the next: it rises 12px into place. */
+.step {
+  animation: step-in var(--vh-dur-step) var(--vh-ease-settle) both;
+}
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--vh-move));
+  }
+}
+@keyframes mark-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.caption-chip {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: var(--vh-target);
+  padding: 0 var(--vh-space-3);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-surface);
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+}
+
+/* Points to the Hajar Aswad line before round 1, while the camera can't see it. It sits below the top card. */
+.edge-arrow {
+  position: absolute;
+  top: 60%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vh-space-2);
+  min-height: var(--vh-target);
+  padding: 0 var(--vh-space-3);
+  border: 0;
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-surface);
+  color: var(--vh-ink);
+  font: var(--vh-text-caption);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.edge-arrow .icon {
+  color: var(--vh-accent-ink);
+}
+.edge-left {
+  left: var(--vh-space-2);
+}
+.edge-right {
+  right: var(--vh-space-2);
+}
+
+.quiet-button {
+  min-height: var(--vh-target);
+  padding: 0 var(--vh-space-4);
+  border: 0;
+  border-radius: var(--vh-radius-control);
+  background: transparent;
+  color: var(--vh-accent-ink);
+  font: var(--vh-text-label);
+  cursor: pointer;
+  transition:
+    background-color var(--vh-dur-micro) var(--vh-ease-settle),
+    transform var(--vh-dur-press) var(--vh-ease-settle);
+}
+.quiet-button:hover {
+  background: var(--vh-sunken);
+}
+.quiet-button:active {
+  transform: scale(0.98);
+}
+
+/* A selected language is filled with ink, as the system sets for every selected item. */
+.lang-choice {
+  display: inline-flex;
+  gap: var(--vh-space-1);
+  padding: calc(var(--vh-space-1) - 1px);
+  border: 1px solid var(--vh-line);
+  border-radius: var(--vh-radius-control);
+  background: var(--vh-sunken);
+}
+.lang-choice button {
+  min-height: var(--vh-target);
+  padding: 0 var(--vh-space-4);
+  border: 0;
+  border-radius: var(--vh-radius-inner);
+  background: transparent;
+  color: var(--vh-ink);
+  font: var(--vh-text-label);
+  font-weight: 500;
+  cursor: pointer;
+}
+.lang-choice button[aria-checked="true"] {
+  background: var(--vh-ink);
+  color: var(--vh-surface);
+  font-weight: 600;
+}
+.card .lang-row {
+  display: grid;
+  justify-items: start;
+  gap: var(--vh-space-2);
+  margin-top: var(--vh-space-4);
+}
+.card .lang-row p {
+  margin: 0;
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+}
+
+/* The bottom sheet: the menu and the done card. It rises over a scrim. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--vh-scrim);
+  animation: fade-in var(--vh-dur-panel) var(--vh-ease-settle) both;
+}
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  max-height: calc(100% - var(--vh-space-16));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vh-space-6);
+  padding: var(--vh-space-6) var(--vh-space-6) var(--vh-space-8);
+  border-radius: var(--vh-radius-panel) var(--vh-radius-panel) 0 0;
+  background: var(--vh-surface);
+  color: var(--vh-ink);
+  animation: sheet-in var(--vh-dur-panel) var(--vh-ease-settle) both;
+}
+@media (min-width: 1024px) {
+  .sheet {
+    left: 50%;
+    right: auto;
+    width: calc(var(--vh-space-16) * 9);
+    margin-left: calc(var(--vh-space-16) * -4.5);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--vh-move));
+  }
+}
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--vh-space-4);
+}
+.sheet-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vh-space-3);
+  margin: 0;
+  font: var(--vh-text-instruction);
+}
+.sheet-title .icon {
+  margin-top: var(--vh-space-1);
+}
+.sheet-sub {
+  margin: var(--vh-space-1) 0 0;
+  font: var(--vh-text-caption);
+  color: var(--vh-ink-muted);
+}
+.sheet-note {
+  margin: 0;
+  font: var(--vh-text-body);
+  color: var(--vh-ink-muted);
+}
+.sheet-label {
+  margin: 0;
+  font: var(--vh-text-label);
+}
+.sheet-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vh-space-2);
+}
+.sheet .primary-button {
+  align-self: stretch;
+  margin-top: 0;
+}
+.mistake-list {
+  display: grid;
+  gap: var(--vh-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mistake-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vh-space-2);
+  font: var(--vh-text-body);
+  color: var(--vh-mistake);
+}
+.mistake-list .icon {
+  height: calc(var(--vh-space-6) + var(--vh-space-1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark.done {
+    animation: none;
+  }
+  .quiet-button:active {
+    transform: none;
+  }
+}

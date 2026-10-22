@@ -49,7 +49,7 @@ Tawaf builds the step checks and the walking figure, and every later rite reuses
 | 0 | `walking-skeleton` | A learner opens a link on a phone or laptop and turns the camera round a plain Kaabah. One e2e test runs in CI, and the site is live. | The repo is empty. This slice proves the 3D, deploy and test rails, and the phone speed (O8). |
 | 1 | `tawaf` | A learner walks seven anticlockwise rounds from the Hajar Aswad line, with hints on or off. The app names each mistake. Malay and English. | It builds the step checks and the walking figure that slices 2 to 5 reuse. Split at `/spec` into 1 to 1d. |
 | 1b | `tawaf-stations` | The station sheet at the Hajar Aswad line with istilam, the doa between the Rukun Yamani and the Hajar Aswad, and two rakaat behind the Maqam Ibrahim. | It reuses the figure and the step checks from `tawaf`. |
-| 1c | `tawaf-character` | The learner picks a man or a woman. Men learn idtiba' and raml. The joystick sits in a settings menu. | It reuses the figure from `tawaf`. `umrah` needs the pick for ihram. |
+| 1c | `tawaf-character` | The learner picks a man or a woman. Men learn idtiba' and raml. The joystick switch joins the menu. | It reuses the figure from `tawaf`. `umrah` needs the pick for ihram. |
 | 1d | `masjidil-haram` | The mosque round the mataf, and a `/perf` re-run at full mosque size. | It adds the mosque to the `tawaf` scene. |
 | 2 | `sai` | A learner walks seven legs from Safa to Marwah, with the green-light zone, hints on or off. | It reuses the step checks and the mosque scene from `tawaf`. |
 | 3 | `umrah` | A learner makes niyyah and puts on ihram before the miqat, then does tawaf, sa'i and tahallul in order. | It needs `tawaf` and `sai`. It completes the Umrah part of tamattu'. |
